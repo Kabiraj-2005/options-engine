@@ -33,7 +33,7 @@ int main()
 {
 double S = 1400, K = 1500 , T = 0.25 , r = 0.06 , v = 0.30 ;
 double bs_price = black_scholles_call(S,K,T,r,v);
-double cs_price = monte_carlo_call(S,K,T,r,v,1000000);
+double cs_price = monte_carlo_call(S,K,T,r,v,10000000);
 std::cout << "Black-Scholles price: " << bs_price << std::endl;
 std::cout << "Monte Carlo Price" << cs_price << std::endl;
 return 0;
