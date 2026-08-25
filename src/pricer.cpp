@@ -1,7 +1,7 @@
 #include<cmath>
 #include<iostream>
 #include<random>
-
+#include<chrono>
 
 double norm_cdf(double x){
 return 0.5*std::erfc(-x/std::sqrt(2));
@@ -33,9 +33,13 @@ int main()
 {
 double S = 1400, K = 1500 , T = 0.25 , r = 0.06 , v = 0.30 ;
 double bs_price = black_scholles_call(S,K,T,r,v);
+auto start = std::chrono::high_resolution_clock::now();
 double cs_price = monte_carlo_call(S,K,T,r,v,10000000);
+auto end = std::chrono::high_resolution_clock::now();
+std::chrono::duration<double, std::milli> elapsed = end - start ;
 std::cout << "Black-Scholles price: " << bs_price << std::endl;
 std::cout << "Monte Carlo Price" << cs_price << std::endl;
+std::cout << "Time Taken" << elapsed.count() << "ms" << std::endl;
 return 0;
 }
 
