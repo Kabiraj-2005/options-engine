@@ -15,18 +15,29 @@ double d2 = d1 - v * std::sqrt(T);
 return S* norm_cdf (d1) - K*std::exp(-r*T)*norm_cdf(d2);
 }
 
-double monte_carlo_call(double S , double K , double T , double r, double v , int n){
-std::mt19937 rng(42);
+double  simulate_chunk(double S , double K ,double T, double r , double v , long long n_paths , unsigned seed ){
+std::mt19937 rng(seed);
 std::normal_distribution<double> norm(0.0 , 1.0);
 double total = 0.0;
 
-for(int i = 0 ; i < n ; i++){
+for(long long  i = 0 ; i < n_paths ; i++){
 double z = norm(rng);
 double ST = S*std::exp((r-0.5*v*v)*T+v*std::sqrt(T)*z);
 total += std::max(ST-K , 0.0);
 }
+
+return total ;
+
+
+}
+double monte_carlo_call(double S , double K , double T , double r, double v , long long  n){
+
+    double total = simulate_chunk(S,K,T,r,v,n,42) ; 
+
 return std::exp(-r*T)*(total/n);
 }
+
+
 
 
 int main()
@@ -39,7 +50,7 @@ auto end = std::chrono::high_resolution_clock::now();
 std::chrono::duration<double, std::milli> elapsed = end - start ;
 std::cout << "Black-Scholles price: " << bs_price << std::endl;
 std::cout << "Monte Carlo Price" << cs_price << std::endl;
-std::cout << "Time Taken" << elapsed.count() << "ms" << std::endl;
+std::cout << "Time Taken : " << elapsed.count() << "ms" << std::endl;
 return 0;
 }
 
