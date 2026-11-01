@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Platform — options-engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="app">
+
+<aside class="side">
+  <a class="mark" href="index.html">options<span>-</span>engine</a>
+  <nav aria-label="Platform">
+    <button data-view="price" aria-current="page">Price an option</button>
+    <button data-view="queue">Job queue <span class="count" id="queueCount">0</span></button>
+    <button data-view="dash">Dashboard</button>
+    <button data-view="admin" hidden>Admin</button>
+  </nav>
+  <div class="foot">
+    <label for="role">Signed in as</label>
+    <select id="role">
+      <option value="analyst">Analyst</option>
+      <option value="risk">Risk manager</option>
+      <option value="admin">Admin</option>
+    </select>
+    <div class="engine"><span class="dot" id="engineDot"></span><span id="engineText">Checking engine</span></div>
+    <a class="back" href="index.html">Back to overview</a>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="notice" id="mockNotice" hidden>
+    Running the in-browser engine. Results are real Monte Carlo, but timings are the browser's, not the C++ engine's. Set <code>OE.config.baseUrl</code> in <code>js/api.js</code> once the backend is up.
+  </div>
+
+  <!-- ===== Price an option ===== -->
+  <section class="view" id="view-price">
+    <div class="view-head">
+      <div>
+        <h1>Price an option</h1>
+        <p>Six inputs. The reference price updates as you type; the simulation runs when you submit.</p>
+      </div>
+    </div>
+
+    <div class="grid-form">
+      <form id="priceForm" novalidate>
+        <div class="fields">
+          <div class="field wide">
+            <label>Option type</label>
+            <div class="seg" role="group" aria-label="Option type">
+              <button type="button" data-type="call" aria-pressed="true">Call</button>
+              <button type="button" data-type="put" aria-pressed="false">Put</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="S">Share price <small>S</small></label>
+            <input id="S" name="S" type="number" step="any" min="0" value="1400" required>
+            <span class="err" id="err-S"></span>
+          </div>
+          <div class="field">
+            <label for="K">Strike <small>K</small></label>
+            <input id="K" name="K" type="number" step="any" min="0" value="1500" required>
+            <span class="err" id="err-K"></span>
+          </div>
+          <div class="field">
+            <label for="T">Time to expiry, years <small>T</small></label>
+            <input id="T" name="T" type="number" step="any" min="0" value="0.25" required>
+            <span class="err" id="err-T"></span>
+          </div>
+          <div class="field">
+            <label for="r">Risk-free rate <small>r, as a decimal</small></label>
+            <input id="r" name="r" type="number" step="any" value="0.06" required>
+            <span class="err" id="err-r"></span>
+          </div>
+          <div class="field">
+            <label for="v">Volatility <small>v, as a decimal</small></label>
+            <input id="v" name="v" type="number" step="any" min="0" value="0.30" required>
+            <span class="err" id="err-v"></span>
+          </div>
+          <div class="field">
+            <label for="n">Simulated paths <small>n</small></label>
+            <input id="n" name="n" type="number" step="1" min="1000" value="1000000" required>
+            <div class="presets">
+              <button type="button" data-n="100000">100 thousand</button>
+              <button type="button" data-n="1000000">1 million</button>
+              <button type="button" data-n="10000000">10 million</button>
+            </div>
+            <span class="err" id="err-n"></span>
+          </div>
+
+          <div class="field">
+            <label for="method">Method</label>
+            <select id="method" name="method">
+              <option value="mc">Monte Carlo (engine)</option>
+              <option value="bs">Black-Scholes only (instant, reference)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="vr">Variance reduction</label>
+            <select id="vr" name="vr">
+              <option value="none">None</option>
+              <option value="antithetic" disabled>Antithetic variates (planned)</option>
+              <option value="control" disabled>Control variates (planned)</option>
+              <option value="sobol" disabled>Sobol sampling (planned)</option>
+            </select>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-sig" type="submit" id="submitBtn">Submit job</button>
+            <button class="btn btn-quiet" type="button" id="resetBtn">Reset to reference contract</button>
+            <span class="hint" id="submitHint"></span>
+          </div>
+        </div>
+      </form>
+
+      <aside class="preview" aria-live="polite">
+        <h2>Before you submit</h2>
+        <div class="big"><span id="pvPrice">52.6884</span><small>Black-Scholes</small></div>
+        <svg class="payoff" id="payoff" viewBox="0 0 320 110" role="img" aria-label="Payoff at expiry"></svg>
+        <dl>
+          <dt>Delta (reference)</dt><dd id="pvDelta">0.3878</dd>
+          <dt>Moneyness S / K</dt><dd id="pvMoney">0.933</dd>
+          <dt>Estimated engine time</dt><dd id="pvTime">20 ms</dd>
+          <dt>95% error bar at n</dt><dd id="pvErr">±0.21</dd>
+        </dl>
+        <div class="note">
+          Timing assumes <b id="pvThreads">4 threads</b> at about <b>81 ns per path</b>, the measured single-thread cost from the benchmarks. The error bar is 1.96 standard errors, from a quick 40,000-path variance estimate run in the browser.
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ===== Job queue ===== -->
+  <section class="view" id="view-queue" hidden>
+    <div class="view-head">
+      <div>
+        <h1>Job queue</h1>
+        <p>Newest first. The list refreshes on its own; click a row for the full result.</p>
+      </div>
+      <button class="btn btn-sm" id="refreshBtn">Refresh now</button>
+    </div>
+    <div class="table-wrap">
+      <table class="jobs" id="jobsTable">
+        <thead>
+          <tr>
+            <th>Job</th><th>Status</th><th>Contract</th>
+            <th class="num">Paths</th><th class="num">Price</th><th class="num">± 95%</th><th class="num">Delta</th><th class="num">Time</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="jobsBody"></tbody>
+      </table>
+      <div class="empty" id="jobsEmpty">
+        <b>No jobs yet</b>
+        Submit one from Price an option and it will show up here.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Dashboard ===== -->
+  <section class="view" id="view-dash" hidden>
+    <div class="view-head">
+      <div>
+        <h1>Dashboard</h1>
+        <p>How the engine is doing across every job run on this platform.</p>
+      </div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="kpi-l">Jobs completed</div><div class="kpi-v" id="kJobs">0</div></div>
+      <div class="kpi"><div class="kpi-l">Paths simulated</div><div class="kpi-v" id="kPaths">0</div></div>
+      <div class="kpi"><div class="kpi-l">Worst error vs Black-Scholes</div><div class="kpi-v" id="kErr">—</div></div>
+      <div class="kpi"><div class="kpi-l">Mean run time</div><div class="kpi-v" id="kTime">—</div></div>
+    </div>
+    <div class="charts">
+      <div class="chart">
+        <h3>Convergence</h3>
+        <p>Error against the exact price as paths increase. The grey line is the 95% error you should expect at each path count; orange points are the C++ engine's measured runs, white are jobs from this session. Points well under the line got lucky.</p>
+        <svg id="convChart" viewBox="0 0 520 260"></svg>
+      </div>
+      <div class="chart">
+        <h3>Engine timing, 10M paths</h3>
+        <p>Measured versions from the benchmark log. Pending versions are drawn empty until they are measured.</p>
+        <svg id="timeChart" viewBox="0 0 520 260"></svg>
+      </div>
+    </div>
+    <div class="chart">
+      <h3>Recent results</h3>
+      <p>Last eight completed jobs, with how far each landed from the reference.</p>
+      <div class="table-wrap">
+        <table class="jobs">
+          <thead><tr><th>Job</th><th>Contract</th><th class="num">Paths</th><th class="num">Monte Carlo</th><th class="num">Black-Scholes</th><th class="num">Error</th></tr></thead>
+          <tbody id="recentBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Admin ===== -->
+  <section class="view" id="view-admin" hidden>
+    <div class="view-head">
+      <div>
+        <h1>Admin</h1>
+        <p>Engine limits and who can use the platform.</p>
+      </div>
+    </div>
+    <div class="admin-grid">
+      <div class="panel">
+        <h3>Engine</h3>
+        <div class="fields">
+          <div class="field">
+            <label for="adThreads">Threads</label>
+            <input id="adThreads" type="number" min="1" max="64" value="4">
+          </div>
+          <div class="field">
+            <label for="adMax">Maximum paths per job</label>
+            <input id="adMax" type="number" min="1000" step="1000" value="100000000">
+          </div>
+          <div class="field">
+            <label for="adNs">Cost per path, ns <small>used for time estimates</small></label>
+            <input id="adNs" type="number" min="1" step="1" value="81">
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-sig" id="adSave" type="button">Save engine settings</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Users</h3>
+        <table class="users">
+          <thead><tr><th>Name</th><th>Role</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Utpal Kabiraj</td><td>Admin</td><td>Active</td></tr>
+            <tr><td>Harsh Sonkar</td><td>Admin</td><td>Active</td></tr>
+            <tr><td>Aryan Harish Yadav</td><td>Analyst</td><td>Active</td></tr>
+            <tr><td>Arya</td><td>Risk manager</td><td>Active</td></tr>
+          </tbody>
+        </table>
+        <p style="color:var(--mute);font-size:13px;margin-top:14px">User management writes to the data layer once it exists. Until then this table is static.</p>
+        <h3 style="margin-top:32px">Queue</h3>
+        <button class="btn" id="adClear" type="button">Cancel all queued jobs</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" aria-label="Job detail">
+  <button class="btn btn-sm btn-quiet close" id="drawerClose">Close</button>
+  <div id="drawerBody"></div>
+</aside>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
