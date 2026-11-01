@@ -1,2 +1,4 @@
 pricer
 *.o
+.DS_Store
+pricer
