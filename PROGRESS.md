@@ -40,6 +40,16 @@
   RNG and seed per thread, one write per thread at the end), then
   benchmark 1/2/4/8 threads against the single-threaded baseline on the
   Pavilion.
+  - *Done:* path loop extracted into `simulate_chunk` (returns the sum of
+    raw payoffs, takes its own seed); `monte_carlo_call` now wraps it and
+    still gives exactly 52.6928.
+  - *Done:* `monte_carlo_call_mt` written with `std::thread`. Thread `t`
+    uses seed `42 + t`, the last thread takes the leftover paths, each
+    thread writes its result once, and all threads are joined after they
+    have all started. Prices for 1, 2, 3, 4, 7 and 8 threads all fall
+    within 52.6884 ± 0.07, and 1 thread reproduces 52.6928 exactly.
+  - *Next:* thread count from the command line, then the official
+    scaling benchmark on the Pavilion.
 
 ## Dev setup
 

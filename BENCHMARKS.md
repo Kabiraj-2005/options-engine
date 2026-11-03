@@ -52,6 +52,10 @@ speed.
 | 4 | | | |
 | 8 | | | |
 
+Thread `t` uses seed `42 + t`, so prices differ slightly between thread
+counts. With 1 thread the price must equal the single-threaded price
+exactly; anything else means a bug.
+
 ### Later stages
 
 | Version | Paths | Time | Speedup vs. baseline |
