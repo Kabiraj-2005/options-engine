@@ -4,6 +4,8 @@
 #include<chrono>
 #include<thread>
 #include<vector>
+#include<string>
+#include<iomanip>
 
 double norm_cdf(double x){
 return 0.5*std::erfc(-x/std::sqrt(2));
@@ -97,28 +99,40 @@ double monte_carlo_call_mt(double S , double K , double T , double r , double v 
 
 
 
-int main()
-{
-double S = 1400, K = 1500 , T = 0.25 , r = 0.06 , v = 0.30 ;
-double bs_price = black_scholles_call(S,K,T,r,v);
-auto start = std::chrono::high_resolution_clock::now();
-double cs_price = monte_carlo_call(S,K,T,r,v,10000000);
-auto end = std::chrono::high_resolution_clock::now();
-auto start_st = std::chrono::high_resolution_clock::now();
-double mcs_price = monte_carlo_call_mt(S,K,T,r,v,10000000, 4);
-auto end_st = std::chrono::high_resolution_clock::now();
-std::chrono::duration<double, std::milli> elapsed = end - start ;
-std::chrono::duration<double, std::milli> elapsed_st = end_st - start_st ;
-std::cout << "Black-Scholles price: " << bs_price << std::endl;
-std::cout << "Monte Carlo Price: " << cs_price << std::endl;
-std::cout << "Monte Carlo Price with multithreading: " << mcs_price << std::endl;
-
-std::cout << "Time Taken normally : " << elapsed.count() << "ms" << std::endl;
-
-
-std::cout << "Time Taken using multithreading : " << elapsed_st.count() << "ms" << std::endl;
-
-return 0;
+// Reads the thread count from argv[1]. Only accepts a whole number >= 1
+// written as plain digits, so "0", "-1", "abc" and "8abc" are all rejected.
+bool parse_threads(const std::string& arg, int& out){
+if(arg.empty()) return false;
+for(char c : arg){
+    if(c < '0' || c > '9') return false;
+}
+try{
+    out = std::stoi(arg);
+}catch(const std::exception&){
+    return false;      // too big to fit in an int
+}
+return out >= 1;
 }
 
+int main(int argc, char* argv[])
+{
+int n_threads = 0;
+if(argc != 2 || !parse_threads(argv[1], n_threads)){
+    std::cerr << "usage: " << argv[0] << " <threads>   (threads = whole number >= 1)" << std::endl;
+    return 1;
+}
 
+double S = 1400, K = 1500 , T = 0.25 , r = 0.06 , v = 0.30 ;
+long long n = 10000000;
+
+auto start = std::chrono::steady_clock::now();
+double price = monte_carlo_call_mt(S,K,T,r,v,n,n_threads);
+auto end = std::chrono::steady_clock::now();
+std::chrono::duration<double, std::milli> elapsed = end - start ;
+
+std::cout << std::fixed
+          << "threads=" << n_threads
+          << " price=" << std::setprecision(4) << price
+          << " time_ms=" << std::setprecision(3) << elapsed.count() << std::endl;
+return 0;
+}

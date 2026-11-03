@@ -20,10 +20,11 @@
   convergence study is still to be done (see `ISSUES.md` #1).
 - **Speed baseline established.** 10,000,000 paths, single-threaded,
   `-O2`, took **810.05 ms** on the primary benchmark machine (HP Pavilion,
-  4-core Linux). See `BENCHMARKS.md`.
+  Linux, 2 cores, 4 threads (i3-6100U)). See `BENCHMARKS.md`.
 - **Cross-machine sanity check.** The same core loop on a MacBook Air M3
   processed 1,000,000,000 paths in ~92,000 ms (~92 ns/path), similar to
-  the Linux baseline (~81 ns/path).
+  the Linux baseline (~81 ns/path). *Needs recheck:* the Mac figure may
+  have come from a build without `-O2`.
 - **Requirement and Feasibility Study completed** and submitted, covering
   actors, functional/non-functional requirements, technical/operational/
   economic/schedule/legal feasibility, and risk analysis.
@@ -48,8 +49,13 @@
     thread writes its result once, and all threads are joined after they
     have all started. Prices for 1, 2, 3, 4, 7 and 8 threads all fall
     within 52.6884 ± 0.07, and 1 thread reproduces 52.6928 exactly.
-  - *Next:* thread count from the command line, then the official
-    scaling benchmark on the Pavilion.
+  - *Done:* thread count comes from the command line (`./pricer <threads>`,
+    invalid input prints usage and exits non-zero); each run prints one
+    line `threads=N price=P time_ms=T`. `scripts/benchmark.sh` builds,
+    runs 1/2/4/8 threads 7 times each and reports medians, speedups and
+    price checks.
+  - *Next:* run `scripts/benchmark.sh` on the Pavilion for the official
+    scaling numbers.
 
 ## Dev setup
 
