@@ -1,4 +1,5 @@
 pricer
 *.o
+*.save
 .DS_Store
-pricer
+results/
