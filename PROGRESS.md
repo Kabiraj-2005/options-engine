@@ -41,6 +41,14 @@
 - **Multi-seed convergence study (4 Nov 2026).** `scripts/convergence.sh`
   with 50 seeds: RMSE 0.1084 at 1M paths and 0.0379 at 10M, close to the
   expected 0.108 and 0.034. See `BENCHMARKS.md`.
+- **Standard error returned by the engine (6–8 Nov 2026, branch
+  `std-error`, ISSUES #1).** `simulate_chunk` returns the sum and the sum
+  of squared payoffs; the multithreaded pricer adds the threads' totals
+  (not their separate errors) and one shared function, `finish`, turns the
+  totals into price and standard error for both pricers. Output shows
+  `+/-`, a 95% interval and `std_err=` in `--bench`. Standard error 0.108
+  at 1M and 0.034 at 10M paths, independent of thread count; default
+  prices unchanged. Pavilion timing not yet re-measured.
 - **Mac per-path claim withdrawn (4 Nov 2026).** The old "~92 ns/path on the
   Mac, similar to Linux" figure matches a build without `-O2` (the VS Code
   run button), so it is no longer used as validation.

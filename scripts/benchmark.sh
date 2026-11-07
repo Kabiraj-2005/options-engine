@@ -49,7 +49,7 @@ median() {
         price=""
         for _ in $(seq "$RUNS"); do
             line=$(./pricer "$t" --bench)
-            # line looks like: threads=4 price=52.6983 time_ms=241.447
+            # line looks like: threads=4 price=52.6983 std_err=0.0343 time_ms=241.447
             times+=("$(echo "$line" | sed -E 's/.*time_ms=([0-9.]+).*/\1/')")
             price=$(echo "$line" | sed -E 's/.*price=([0-9.]+).*/\1/')
         done

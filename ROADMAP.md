@@ -40,6 +40,7 @@ time runs short.
 
 ## Also open
 
-- [ ] Engine returns the standard error with the price (ISSUES #1).
+- [x] Engine returns the standard error with the price (ISSUES #1, done
+      8 Nov 2026; Pavilion timing still to be re-measured).
 - [ ] Engine takes the contract inputs instead of the fixed reference
       contract (ISSUES #4, `INTERFACE.md`).

@@ -35,6 +35,10 @@ What this shows:
 Speedups in this table are relative to the 1-thread median above, not to
 the historical 810.05 ms figure below.
 
+**Measured before the standard error was added** (8 Nov 2026). The hot
+loop now also adds up each payoff squared. Its effect on these times has
+not been measured on the Pavilion yet; rerun `scripts/benchmark.sh` there.
+
 ### Historical single-threaded baseline
 
 | Version | Paths | Time | Date |
@@ -73,7 +77,27 @@ MacBook (`-O2`).
   seeds (table above), so the random numbers match across both machines
   for those cases.
 
-The standard error is not yet returned by the engine (still open, ISSUES #1).
+### Standard error reported by the engine (8 Nov 2026)
+
+Since 8 Nov 2026 the engine returns the standard error with each price
+(ISSUES #1). Default seed 42, run on the MacBook (`-O2`); accuracy does not
+depend on the machine.
+
+| Paths | Threads | Price | Standard error | 95% interval | Contains 52.6884? |
+|---|---|---|---|---|---|
+| 1,000,000 | 1 | 52.8503 | 0.1087 | 52.6373 to 53.0634 | yes |
+| 1,000,000 | 4 | 52.5970 | 0.1081 | 52.3851 to 52.8089 | yes |
+| 10,000,000 | 1 | 52.6928 | 0.0343 | 52.6256 to 52.7599 | yes |
+| 10,000,000 | 4 | 52.6983 | 0.0343 | 52.6311 to 52.7654 | yes |
+
+- The single-run standard error (0.108 at 1M, 0.034 at 10M) matches the
+  multi-seed RMSE above (0.1084, 0.0379), so one run now gives an honest
+  error estimate.
+- It does not depend on the thread count, because the threads' sums and
+  sums of squares are added first and the error is computed once from the
+  totals.
+- Default prices are unchanged by this change (52.6928 / 52.6814 /
+  52.6983 / 52.6646 for 1/2/4/8 threads).
 
 ### Early single runs (historical, 26 Aug 2026)
 
