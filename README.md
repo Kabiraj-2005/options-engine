@@ -22,15 +22,16 @@ and their timings are not valid.
 
 - `<threads>`: number of threads, a whole number of 1 or more (required).
 - `--bench`: run only the multithreaded pricer and print one line,
-  e.g. `threads=4 price=52.6983 time_ms=241.447`.
+  e.g. `threads=4 price=52.6983 std_err=0.0343 time_ms=241.447`.
 - `--seed N`: base seed, a whole number of 0 or more (default 42). Thread
   `t` uses seed `N + t`.
 - `--paths N`: number of paths, a whole number of 1 or more
   (default 10,000,000).
 
 Without `--bench` it prints the exact Black-Scholes price, the
-single-threaded Monte Carlo price and time, the multithreaded price and
-time, and that run's speedup (one run, not the official benchmark).
+single-threaded and multithreaded Monte Carlo prices (each with its
+standard error) and times, the 95% interval of the multithreaded price,
+and that run's speedup (one run, not the official benchmark).
 
 Anything invalid (missing thread count, `0`, `-1`, `abc`, `8abc`, an
 unknown option) prints a usage message to stderr and exits with code 1.

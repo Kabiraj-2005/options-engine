@@ -6,15 +6,6 @@ is updated.
 
 ## Open
 
-### 1. The engine does not return its standard error
-*Found 15 Sep 2026. Owner: Utpal.*
-
-The multi-seed measurement part of this issue is done (see Resolved, 1a).
-What is left: have the engine return the standard error (and a 95%
-interval) alongside the price, as the frontend expects (`INTERFACE.md`).
-This changes the hot loop (it needs the sum of squared payoffs), so it is
-not done yet.
-
 ### 2. Is the C++ engine slower than the JavaScript version?
 *Found 15 Sep 2026. Owner: Utpal.*
 
@@ -82,6 +73,17 @@ The 26 Aug single-threaded figure (810.05 ms) and the 4 Nov 1-thread median
 is known, 810.05 ms is kept as historical only.
 
 ## Resolved
+
+### 1. The engine does not return its standard error
+*Found 15 Sep 2026. Resolved 8 Nov 2026 (branch `std-error`).*
+
+`simulate_chunk` now returns the sum and the sum of squared payoffs; the
+threads' totals are added and one shared function (`finish`) turns them
+into the price and its standard error. Normal output shows `+/-` and a 95%
+interval; `--bench` adds `std_err=`. Standard error 0.108 at 1M paths and
+0.034 at 10M, matching the multi-seed RMSE (see `BENCHMARKS.md`). Default
+prices unchanged. Still to do: re-measure the speed on the Pavilion, since
+the hot loop does one more multiply and add per path.
 
 ### 1a. Convergence shown with many seeds, not single runs
 *Resolved 4 Nov 2026.*

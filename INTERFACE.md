@@ -6,7 +6,7 @@ system expects from it.
 *(This file was added on 4 Nov 2026. `ISSUES.md` already referred to it,
 but no earlier version exists in the repository.)*
 
-## What the program does now (commit on branch `multithreading`, 4 Nov 2026)
+## What the program does now (branch `std-error`, 8 Nov 2026)
 
 ```
 ./pricer <threads> [--bench] [--seed N] [--paths N]
@@ -24,21 +24,25 @@ v=0.30, European call. The program does **not** read S, K, T, r or v from
 its arguments.
 
 Normal output of `./pricer 4` (several lines, for people). This is a real
-run on the Mac with a nearly empty battery, so the times are only an
-example of the format:
+run on the Mac (development machine), so the times are only an example of
+the format:
 
 ```
 Paths: 10000000   Base seed: 42
 Black-Scholes price (exact):      52.6884
-Monte Carlo, single-threaded:     52.6928   time 2227.028 ms
-Monte Carlo, multithreaded:       52.6983   time 937.245 ms   (4 threads)
-Speedup (this single run, not the official benchmark): 2.38x
+Monte Carlo, single-threaded:     52.6928 +/- 0.0343   time 307.428 ms
+Monte Carlo, multithreaded:       52.6983 +/- 0.0343   time 95.065 ms   (4 threads)
+95% interval (multithreaded):     52.6311 to 52.7654
+Speedup (this single run, not the official benchmark): 3.23x
 ```
+
+`+/-` is one standard error; the 95% interval is price ± 1.96 standard
+errors.
 
 `--bench` output (exactly one line, for scripts), format:
 
 ```
-threads=4 price=52.6983 time_ms=<time>
+threads=4 price=52.6983 std_err=0.0343 time_ms=<time>
 ```
 
 Errors: a missing or invalid number, or an unknown option, prints a usage
@@ -58,9 +62,9 @@ reference }`.
 |---|---|
 | Takes S, K, T, r, v (and `n`) as inputs | Fixed reference contract; only `n` (`--paths`) and threads can be set |
 | Option `type` and `method` | Call only, Monte Carlo only |
-| Returns standard error / 95% interval | Not returned (ISSUES #1) |
+| Returns standard error / 95% interval | **Done (8 Nov 2026).** Standard error in both outputs; 95% interval in normal output (price ± 1.96 × std_err) |
 | Returns delta | Not computed |
-| Machine-readable output | Only the `--bench` line, which has price and time |
+| Machine-readable output | Only the `--bench` line, which has price, standard error and time |
 
 The backend owner should not build against the five-input interface until
 the engine provides it.
