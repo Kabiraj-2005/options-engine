@@ -18,6 +18,7 @@ and their timings are not valid.
 
 ```
 ./pricer <threads> [--bench] [--seed N] [--paths N]
+         [--S X] [--K X] [--T X] [--r X] [--v X] [--put]
 ```
 
 - `<threads>`: number of threads, a whole number of 1 or more (required).
@@ -27,17 +28,30 @@ and their timings are not valid.
   `t` uses seed `N + t`.
 - `--paths N`: number of paths, a whole number of 1 or more
   (default 10,000,000).
+- `--S X`, `--K X`, `--T X`, `--v X`: share price, strike, years to
+  expiry and volatility, each a decimal above 0 (defaults 1400, 1500, 0.25,
+  0.30).
+- `--r X`: risk-free rate, a decimal that may be 0 or negative
+  (default 0.06).
+- `--put`: price a put instead of a call.
+
+Example (a textbook contract, exact price 8.0214):
+
+```
+./pricer 4 --S 100 --K 105 --T 1 --r 0.05 --v 0.2
+```
 
 Without `--bench` it prints the exact Black-Scholes price, the
 single-threaded and multithreaded Monte Carlo prices (each with its
 standard error) and times, the 95% interval of the multithreaded price,
 and that run's speedup (one run, not the official benchmark).
 
-Anything invalid (missing thread count, `0`, `-1`, `abc`, `8abc`, an
-unknown option) prints a usage message to stderr and exits with code 1.
+Anything invalid (missing thread count, `0`, `-1`, `abc`, `8abc`, `nan`,
+`inf`, an unknown option, a missing value) prints a usage message to
+stderr and exits with code 1.
 
-The contract is fixed: S=1400, K=1500, T=0.25, r=0.06, v=0.30 (exact price
-52.6884). See `INTERFACE.md`.
+Without contract options it prices the reference call: S=1400, K=1500,
+T=0.25, r=0.06, v=0.30 (exact price 52.6884). See `INTERFACE.md`.
 
 ## Scripts
 

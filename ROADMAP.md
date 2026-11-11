@@ -42,5 +42,17 @@ time runs short.
 
 - [x] Engine returns the standard error with the price (ISSUES #1, done
       8 Nov 2026; Pavilion timing still to be re-measured).
-- [ ] Engine takes the contract inputs instead of the fixed reference
-      contract (ISSUES #4, `INTERFACE.md`).
+- [x] Engine takes the contract inputs instead of the fixed reference
+      contract, and prices puts as well as calls (ISSUES #4, done
+      11 Nov 2026).
+
+## Backend and frontend (Utpal, since 10 Nov 2026)
+
+1. [ ] Engine prints a JSON line for the backend.
+2. [ ] Node.js backend with the endpoints in `frontend/js/api.js`
+       (`POST /jobs`, `GET /jobs`, `GET /jobs/:id`, `DELETE /jobs/:id`,
+       `GET /health`), running `./pricer`.
+3. [ ] Frontend points at the backend; outdated claims fixed (ISSUES #5).
+
+These come before the speed work above, which needs the Pavilion
+(currently unavailable).

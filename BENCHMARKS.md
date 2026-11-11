@@ -99,6 +99,23 @@ depend on the machine.
 - Default prices are unchanged by this change (52.6928 / 52.6814 /
   52.6983 / 52.6646 for 1/2/4/8 threads).
 
+### Other contracts and puts (11 Nov 2026)
+
+Checks that Monte Carlo matches Black-Scholes away from the reference
+contract. MacBook, `-O2`, 4 threads, seed 42, 10,000,000 paths unless
+noted.
+
+| Contract | Type | Black-Scholes | Monte Carlo | Inside 95% interval? |
+|---|---|---|---|---|
+| Reference (S=1400, K=1500, T=0.25, r=0.06, v=0.30) | put | 130.3564 | 130.3270 ± 0.0437 | yes |
+| S=100, K=105, T=1, r=0.05, v=0.2 | call | 8.0214 | 8.0228 ± 0.0042 | yes |
+| S=100, K=105, T=1, r=0.05, v=0.2 | put | 7.9004 | 7.8981 ± 0.0033 | yes |
+| Reference with r=-0.01, T=2, v=0.5 | put | 473.0793 | 472.9838 ± 0.1368 | yes |
+| Reference with S=2000 (1M paths) | put | 2.0821 | 2.0701 ± 0.0169 | yes |
+
+The put prices also agree with put-call parity
+(put = call − S + K·e^(−rT)).
+
 ### Early single runs (historical, 26 Aug 2026)
 
 | Paths | Monte Carlo price | Absolute error |

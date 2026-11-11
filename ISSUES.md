@@ -28,7 +28,10 @@ Pavilion, profile with `perf stat`, and only then replace the RNG if the
 profile supports it. Re-baseline in `BENCHMARKS.md` afterwards.
 
 ### 3. Frontend ownership
-*Noted 15 Sep 2026. Owner: Aryan.*
+*Noted 15 Sep 2026. Owner: Aryan; since 10 Nov 2026, Utpal.*
+
+Update 10 Nov 2026: the frontend fixes and the backend are now being done
+by Utpal.
 
 A complete static frontend (landing page plus platform with pricing form,
 job queue, dashboard and admin) exists, along with the backend contract
@@ -37,17 +40,21 @@ branch `frontend-starter` and goes into `main` via a pull request for Aryan
 to review, keep or rewrite, and own from there.
 
 ### 4. Engine interface does not match what the frontend/backend expect
-*Found 4 Nov 2026. Owner: Utpal (engine), Harsh (backend).*
+*Found 4 Nov 2026. Owner: Utpal (engine; backend too since 10 Nov 2026).*
 
-The engine prices only the fixed reference contract and prints text. The
-frontend contract expects S, K, T, r, v, n, type and method as inputs and
-price, standard error, 95% interval and delta as outputs. Full table in
-`INTERFACE.md`. Not to be built as part of the threading work.
+The frontend contract expects S, K, T, r, v, n, type and method as inputs
+and price, standard error, 95% interval and delta as outputs. Full table
+in `INTERFACE.md`.
+
+Progress 11 Nov 2026 (branch `engine-inputs`): the engine takes S, K, T, r,
+v (`--S --K --T --r --v`) and calls or puts (`--put`), with input checking;
+the standard error was added on 8 Nov. Still missing: JSON output for the
+backend, delta, and the backend itself (Node.js).
 
 ### 5. Frontend shows outdated benchmark claims
-*Found 4 Nov 2026. Owner: Aryan.*
+*Found 4 Nov 2026. Owner: Aryan; since 10 Nov 2026, Utpal.*
 
-On branch `frontend-starter`, `frontend/index.html` describes the Linux
+In `frontend/index.html` (in `main` since PR #2), describes the Linux
 machine as "4 cores" and says the engine "splits the paths across all four
 cores"; it also shows 810 ms as the single-threaded figure and the 4-thread
 row as "measuring". `frontend/js/app.js` uses 810.05 ms. The machine has
