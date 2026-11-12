@@ -55,6 +55,10 @@
   negative, the others must be above 0); `--put` prices a put in both
   Monte Carlo and Black-Scholes. Checked against Black-Scholes for several
   contracts (see `BENCHMARKS.md`); default call prices unchanged.
+- **JSON output (12 Nov 2026, branch `engine-inputs`).** `--json` prints
+  one line with the field names of the frontend's `result` object (price,
+  stderr, ci95, reference, elapsedMs, paths, threads), checked with a JSON
+  parser. This is what the Node.js backend will read.
 - **Mac per-path claim withdrawn (4 Nov 2026).** The old "~92 ns/path on the
   Mac, similar to Linux" figure matches a build without `-O2` (the VS Code
   run button), so it is no longer used as validation.

@@ -48,7 +48,7 @@ time runs short.
 
 ## Backend and frontend (Utpal, since 10 Nov 2026)
 
-1. [ ] Engine prints a JSON line for the backend.
+1. [x] Engine prints a JSON line for the backend (`--json`, 12 Nov 2026).
 2. [ ] Node.js backend with the endpoints in `frontend/js/api.js`
        (`POST /jobs`, `GET /jobs`, `GET /jobs/:id`, `DELETE /jobs/:id`,
        `GET /health`), running `./pricer`.

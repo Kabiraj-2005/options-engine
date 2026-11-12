@@ -48,8 +48,9 @@ in `INTERFACE.md`.
 
 Progress 11 Nov 2026 (branch `engine-inputs`): the engine takes S, K, T, r,
 v (`--S --K --T --r --v`) and calls or puts (`--put`), with input checking;
-the standard error was added on 8 Nov. Still missing: JSON output for the
-backend, delta, and the backend itself (Node.js).
+the standard error was added on 8 Nov. 12 Nov: `--json` prints the
+frontend's `result` object. Still missing: delta, and the backend itself
+(Node.js).
 
 ### 5. Frontend shows outdated benchmark claims
 *Found 4 Nov 2026. Owner: Aryan; since 10 Nov 2026, Utpal.*

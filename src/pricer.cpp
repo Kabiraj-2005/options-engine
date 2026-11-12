@@ -187,7 +187,7 @@ bool parse_decimal(const std::string& arg ,  double& out){
 
 void print_usage(const char* prog){
 std::cerr << "usage: " << prog << " <threads> [--bench] [--seed N] [--paths N]\n"
-          << "       [--S X] [--K X] [--T X] [--r X] [--v X]\n"
+          << "       [--S X] [--K X] [--T X] [--r X] [--v X] [--put] [--json]\n"
           << "  <threads>   number of threads, whole number >= 1\n"
           << "  --bench     run only the multithreaded pricer and print one line:\n"
           << "              threads=N price=P std_err=E time_ms=T\n"
@@ -197,7 +197,11 @@ std::cerr << "usage: " << prog << " <threads> [--bench] [--seed N] [--paths N]\n
           << "  --K X       strike price, above 0 (default 1500)\n"
           << "  --T X       time to expiry in years, above 0 (default 0.25)\n"
           << "  --r X       risk-free interest rate, e.g. 0.06 for 6%; may be 0 or negative (default 0.06)\n"
-          << "  --v X       volatility, e.g. 0.30 for 30%, above 0 (default 0.30)" << std::endl;
+          << "  --v X       volatility, e.g. 0.30 for 30%, above 0 (default 0.30)\n"
+          << "  --put       price a put instead of a call\n"
+          << "  --json      run only the multithreaded pricer and print one JSON line:\n"
+          << "              {\"price\":..,\"stderr\":..,\"ci95\":[lo,hi],\"reference\":..,\n"
+          << "               \"elapsedMs\":..,\"paths\":..,\"threads\":..}" << std::endl;
 }
 
 int main(int argc, char* argv[])
@@ -209,6 +213,7 @@ if(argc < 2 || !parse_whole(argv[1], std::numeric_limits<int>::max(), value) || 
 }
 int n_threads = (int)value;
 bool bench = false;
+bool json = false ;
 bool is_put = false ;
 unsigned seed = 42;
 long long n = 10000000;
@@ -220,6 +225,9 @@ for(int i = 2 ; i < argc ; i++){
     std::string opt = argv[i];
     if(opt == "--bench"){
         bench = true;
+    }else if(opt == "--json"){
+        json = true;
+        
     }else if(opt == "--put"){
 
         is_put = true;
@@ -258,6 +266,30 @@ for(int i = 2 ; i < argc ; i++){
 
 
 try{
+   if(json){
+    auto start = std::chrono::steady_clock::now();
+    PriceResult mt = monte_carlo_call_mt(S,K,T,r,v,n,n_threads,seed,is_put);
+    auto end = std::chrono::steady_clock::now();
+        std::chrono::duration<double, std::milli> elapsed = end - start ;
+    
+    double exact_price = black_scholes(S,K,T,r,v,is_put);
+
+    double low = mt.price - 1.96 * mt.std_err;
+    double high = mt.price + 1.96 * mt.std_err;
+
+    // One line of JSON for the backend. Field names match the result
+    // object in frontend/js/api.js; \" puts a real quote inside the string.
+    std::cout << std::fixed << std::setprecision(6)
+              << "{\"price\":"      << mt.price
+              << ",\"stderr\":"     << mt.std_err
+              << ",\"ci95\":["      << low << "," << high << "]"
+              << ",\"reference\":"  << exact_price
+              << ",\"elapsedMs\":"  << std::setprecision(3) << elapsed.count()
+              << ",\"paths\":"      << n
+              << ",\"threads\":"    << n_threads
+              << "}" << std::endl;
+    return 0;
+   }
     if(bench){
         auto start = std::chrono::steady_clock::now();
         PriceResult mt = monte_carlo_call_mt(S,K,T,r,v,n,n_threads,seed,is_put);

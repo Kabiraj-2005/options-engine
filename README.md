@@ -18,7 +18,7 @@ and their timings are not valid.
 
 ```
 ./pricer <threads> [--bench] [--seed N] [--paths N]
-         [--S X] [--K X] [--T X] [--r X] [--v X] [--put]
+         [--S X] [--K X] [--T X] [--r X] [--v X] [--put] [--json]
 ```
 
 - `<threads>`: number of threads, a whole number of 1 or more (required).
@@ -34,6 +34,9 @@ and their timings are not valid.
 - `--r X`: risk-free rate, a decimal that may be 0 or negative
   (default 0.06).
 - `--put`: price a put instead of a call.
+- `--json`: run only the multithreaded pricer and print one JSON line
+  (price, standard error, 95% interval, exact reference price, time,
+  paths, threads) for the backend. Format in `INTERFACE.md`.
 
 Example (a textbook contract, exact price 8.0214):
 
