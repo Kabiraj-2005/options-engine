@@ -49,6 +49,16 @@
   `+/-`, a 95% interval and `std_err=` in `--bench`. Standard error 0.108
   at 1M and 0.034 at 10M paths, independent of thread count; default
   prices unchanged. Pavilion timing not yet re-measured.
+- **Contract inputs and puts (10–11 Nov 2026, branch `engine-inputs`).**
+  `parse_decimal` reads decimals and rejects junk such as `0.25abc`, `nan`
+  and `inf`; `--S --K --T --r --v` set the contract (r may be 0 or
+  negative, the others must be above 0); `--put` prices a put in both
+  Monte Carlo and Black-Scholes. Checked against Black-Scholes for several
+  contracts (see `BENCHMARKS.md`); default call prices unchanged.
+- **JSON output (12 Nov 2026, branch `engine-inputs`).** `--json` prints
+  one line with the field names of the frontend's `result` object (price,
+  stderr, ci95, reference, elapsedMs, paths, threads), checked with a JSON
+  parser. This is what the Node.js backend will read.
 - **Mac per-path claim withdrawn (4 Nov 2026).** The old "~92 ns/path on the
   Mac, similar to Linux" figure matches a build without `-O2` (the VS Code
   run button), so it is no longer used as validation.
