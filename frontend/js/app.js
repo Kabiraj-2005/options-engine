@@ -55,7 +55,8 @@
   /* ---------- engine status ---------- */
   OE.health().then(function (h) {
     $('engineDot').className = 'dot' + (OE.isMock() ? ' off' : '');
-    $('engineText').textContent = OE.isMock() ? 'Browser engine, ' + h.threads + ' threads' : 'Engine online';
+    if (!OE.isMock()) { OE.config.engine.threads = h.threads; renderPreview(); }
+    $('engineText').textContent = OE.isMock() ? 'Browser engine, ' + h.threads + ' threads' : 'C++ engine online, ' + h.threads + ' threads';
     $('mockNotice').hidden = !OE.isMock();
   }).catch(function () {
     $('engineDot').className = 'dot off';
@@ -74,7 +75,7 @@
     var errs = {};
     if (!(p.S > 0)) errs.S = 'Share price must be above 0.';
     if (!(p.K > 0)) errs.K = 'Strike must be above 0.';
-    if (!(p.T >= 0)) errs.T = 'Time to expiry cannot be negative.';
+    if (!(p.T > 0)) errs.T = 'Time to expiry must be above 0.';
     if (isNaN(p.r)) errs.r = 'Enter a rate, e.g. 0.06 for 6%.';
     if (!(p.v > 0)) errs.v = 'Volatility must be above 0.';
     if (!(p.n >= 1000)) errs.n = 'Use at least 1,000 paths.';
@@ -263,10 +264,14 @@
   }
 
   /* ---------- dashboard ---------- */
-  var BENCH = [ { n: 1e6, err: 0.1619 }, { n: 1e7, err: 0.0044 } ];
+  // Typical error (RMSE over 50 seeds) from scripts/convergence.sh, BENCHMARKS.md.
+  var BENCH = [ { n: 1e6, err: 0.1084 }, { n: 1e7, err: 0.0379 } ];
+  // Official medians, HP Pavilion (i3-6100U, 2 cores / 4 threads), 10M paths,
+  // commit 77419a1, before the standard error and delta were added.
   var TIMES = [
-    { label: 'Single thread', ms: 810.05 },
-    { label: '4 threads', ms: null },
+    { label: '1 thread', ms: 681.787 },
+    { label: '2 threads', ms: 342.396 },
+    { label: '4 threads', ms: 234.451 },
     { label: '+ SIMD', ms: null },
     { label: '+ Variance reduction', ms: null }
   ];

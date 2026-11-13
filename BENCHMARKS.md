@@ -116,6 +116,27 @@ noted.
 The put prices also agree with put-call parity
 (put = call − S + K·e^(−rT)).
 
+### Delta (13 Nov 2026)
+
+Pathwise Monte Carlo delta against the exact Black-Scholes delta. MacBook,
+`-O2`, 4 threads, seed 42, 10,000,000 paths unless noted.
+
+| Contract | Type | Black-Scholes delta | Monte Carlo delta |
+|---|---|---|---|
+| Reference (S=1400, K=1500, T=0.25, r=0.06, v=0.30) | call | 0.387840 | 0.387934 |
+| Reference | put | -0.612160 | -0.612094 |
+| S=100, K=105, T=1, r=0.05, v=0.2 | call | 0.542228 | 0.542258 |
+| S=100, K=105, T=1, r=0.05, v=0.2 | put | -0.457772 | -0.457780 |
+| Reference with S=2000 (1M paths) | call | 0.981820 | 0.981800 |
+
+Call delta − put delta = 1 for the same contract, as theory says
+(0.387934 + 0.612094 = 1.000028).
+
+**Speed effect.** Delta adds one comparison and one addition per path. On
+the MacBook (development only), 1 thread, 10M paths, 7 interleaved runs:
+median 346.2 ms before and 336.2 ms after, so no slowdown was seen there.
+Not yet measured on the Pavilion.
+
 ### Early single runs (historical, 26 Aug 2026)
 
 | Paths | Monte Carlo price | Absolute error |

@@ -31,35 +31,14 @@ profile supports it. Re-baseline in `BENCHMARKS.md` afterwards.
 *Noted 15 Sep 2026. Owner: Aryan; since 10 Nov 2026, Utpal.*
 
 Update 10 Nov 2026: the frontend fixes and the backend are now being done
-by Utpal.
+by Utpal. The frontend (landing page plus platform with pricing form, job
+queue, dashboard and admin) has been in `main` since PR #2, and since
+13 Nov 2026 it is connected to the real engine through `backend/server.js`.
 
-A complete static frontend (landing page plus platform with pricing form,
-job queue, dashboard and admin) exists, along with the backend contract
-in `frontend/js/api.js`. It was produced outside Aryan's branch. It is on
-branch `frontend-starter` and goes into `main` via a pull request for Aryan
-to review, keep or rewrite, and own from there.
-
-### 4. Engine interface does not match what the frontend/backend expect
-*Found 4 Nov 2026. Owner: Utpal (engine; backend too since 10 Nov 2026).*
-
-The frontend contract expects S, K, T, r, v, n, type and method as inputs
-and price, standard error, 95% interval and delta as outputs. Full table
-in `INTERFACE.md`.
-
-Progress 11 Nov 2026 (branch `engine-inputs`): the engine takes S, K, T, r,
-v (`--S --K --T --r --v`) and calls or puts (`--put`), with input checking;
-the standard error was added on 8 Nov. 12 Nov: `--json` prints the
-frontend's `result` object. Still missing: delta, and the backend itself
-(Node.js).
-
-### 5. Frontend shows outdated benchmark claims
-*Found 4 Nov 2026. Owner: Aryan; since 10 Nov 2026, Utpal.*
-
-In `frontend/index.html` (in `main` since PR #2), describes the Linux
-machine as "4 cores" and says the engine "splits the paths across all four
-cores"; it also shows 810 ms as the single-threaded figure and the 4-thread
-row as "measuring". `frontend/js/app.js` uses 810.05 ms. The machine has
-2 cores / 4 threads, and the official numbers are in `BENCHMARKS.md`.
+Still open: the Team section of `frontend/index.html` and the Users table
+in `frontend/app.html` still describe the original split of work (Harsh:
+backend, Aryan: frontend). The team needs to decide how to describe who did
+what before submission.
 
 ### 6. 1-thread timing gap on the Mac (clang)
 *Found 4 Nov 2026. Owner: Utpal. Development machine only.*
@@ -81,6 +60,30 @@ The 26 Aug single-threaded figure (810.05 ms) and the 4 Nov 1-thread median
 is known, 810.05 ms is kept as historical only.
 
 ## Resolved
+
+### 4. Engine interface did not match what the frontend/backend expect
+*Found 4 Nov 2026. Resolved 13 Nov 2026 (branch `backend`).*
+
+The frontend expects S, K, T, r, v, n, type and method as inputs and price,
+standard error, 95% interval and delta as outputs. Now: the engine takes
+the inputs (`--S --K --T --r --v --paths --put`, 11 Nov), prints the
+`result` object as JSON (`--json`, 12 Nov) including delta (13 Nov), and has
+`--exact` for the Black-Scholes method. `backend/server.js` (Node.js)
+provides all five endpoints and runs the engine. Checked end to end in a
+browser. Details in `INTERFACE.md`.
+
+### 5. Frontend showed outdated benchmark claims
+*Found 4 Nov 2026. Resolved 13 Nov 2026 (branch `backend`).*
+
+`frontend/index.html` described the Linux machine as "4 cores", showed
+810 ms single-threaded and the 4-thread row as "measuring", claimed a 36x
+error drop "in line with 1/√n" (from one lucky run, see 1a) and a per-path
+cost of 80–90 ns "on both machines" (withdrawn, see 8). `frontend/js/app.js`
+used 810.05 ms and the single-run errors. Replaced with the official
+Pavilion medians (682 / 342 / 234 ms for 1 / 2 / 4 threads), the 50-seed
+RMSE (0.1084 at 1M, 0.0379 at 10M) and "2 cores / 4 threads". The time
+estimate now uses 94 ns per path per thread, calibrated to the official
+4-thread median.
 
 ### 1. The engine does not return its standard error
 *Found 15 Sep 2026. Resolved 8 Nov 2026 (branch `std-error`).*
