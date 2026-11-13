@@ -59,6 +59,18 @@
   one line with the field names of the frontend's `result` object (price,
   stderr, ci95, reference, elapsedMs, paths, threads), checked with a JSON
   parser. This is what the Node.js backend will read.
+- **Delta (13 Nov 2026, branch `backend`).** Pathwise Monte Carlo delta
+  (each path adds `ST/S` if it pays off, negative for puts), computed in the
+  same loop as the price, plus the exact Black-Scholes delta for comparison.
+  They agree to about 4 decimal places at 10M paths (see `BENCHMARKS.md`).
+  `--exact` prints the Black-Scholes price and delta without simulating.
+- **Backend and frontend connected (13 Nov 2026, branch `backend`).**
+  `backend/server.js` (Node.js, no packages) provides the five endpoints
+  the frontend expects, queues jobs and runs them one at a time with
+  `./pricer --json`, and serves the frontend at
+  `http://localhost:10241/app.html`. The frontend uses it automatically and
+  its outdated benchmark claims were replaced with the official numbers
+  (ISSUES #5). Tested end to end in a headless browser.
 - **Mac per-path claim withdrawn (4 Nov 2026).** The old "~92 ns/path on the
   Mac, similar to Linux" figure matches a build without `-O2` (the VS Code
   run button), so it is no longer used as validation.

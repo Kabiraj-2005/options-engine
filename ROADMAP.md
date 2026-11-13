@@ -31,9 +31,9 @@ repository.)*
 
 ## Must not slip because of SIMD
 
-- [ ] **Delta** (option sensitivity), which the frontend expects in its
-      results (see `INTERFACE.md`).
-- [ ] **Antithetic variates** (variance reduction).
+- [x] **Delta** (option sensitivity), which the frontend expects in its
+      results (pathwise method, done 13 Nov 2026).
+- [ ] **Antithetic variates** (variance reduction). Next.
 
 These are needed features. SIMD is an optimisation and comes second if
 time runs short.
@@ -49,10 +49,12 @@ time runs short.
 ## Backend and frontend (Utpal, since 10 Nov 2026)
 
 1. [x] Engine prints a JSON line for the backend (`--json`, 12 Nov 2026).
-2. [ ] Node.js backend with the endpoints in `frontend/js/api.js`
+2. [x] Node.js backend with the endpoints in `frontend/js/api.js`
        (`POST /jobs`, `GET /jobs`, `GET /jobs/:id`, `DELETE /jobs/:id`,
-       `GET /health`), running `./pricer`.
-3. [ ] Frontend points at the backend; outdated claims fixed (ISSUES #5).
+       `GET /health`), running `./pricer` (13 Nov 2026).
+3. [x] Frontend points at the backend; outdated claims fixed (ISSUES #5,
+       13 Nov 2026).
+4. [ ] Team decides how the Team section credits the work (ISSUES #3).
 
 These come before the speed work above, which needs the Pavilion
 (currently unavailable).

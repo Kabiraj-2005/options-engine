@@ -33,7 +33,7 @@
 
 <main class="main">
   <div class="notice" id="mockNotice" hidden>
-    Running the in-browser engine. Results are real Monte Carlo, but timings are the browser's, not the C++ engine's. Set <code>OE.config.baseUrl</code> in <code>js/api.js</code> once the backend is up.
+    Running the in-browser engine because this page was opened as a file. Results are real Monte Carlo, but timings are the browser's, not the C++ engine's. To use the C++ engine, run <code>node backend/server.js</code> and open <code>http://localhost:10241/app.html</code>.
   </div>
 
   <!-- ===== Price an option ===== -->
@@ -128,7 +128,7 @@
           <dt>95% error bar at n</dt><dd id="pvErr">±0.21</dd>
         </dl>
         <div class="note">
-          Timing assumes <b id="pvThreads">4 threads</b> at about <b>81 ns per path</b>, the measured single-thread cost from the benchmarks. The error bar is 1.96 standard errors, from a quick 40,000-path variance estimate run in the browser.
+          Timing assumes <b id="pvThreads">4 threads</b> at about <b>94 ns per path per thread</b>, calibrated to the official benchmark (10M paths in 234 ms on 4 threads, HP Pavilion). The error bar is 1.96 standard errors, from a quick 40,000-path variance estimate run in the browser.
         </div>
       </aside>
     </div>
@@ -177,12 +177,12 @@
     <div class="charts">
       <div class="chart">
         <h3>Convergence</h3>
-        <p>Error against the exact price as paths increase. The grey line is the 95% error you should expect at each path count; orange points are the C++ engine's measured runs, white are jobs from this session. Points well under the line got lucky.</p>
+        <p>Error against the exact price as paths increase. The grey line is the 95% error you should expect at each path count; orange points are the C++ engine's typical error over 50 runs (RMSE), white are jobs from this session. Points well under the line got lucky.</p>
         <svg id="convChart" viewBox="0 0 520 260"></svg>
       </div>
       <div class="chart">
         <h3>Engine timing, 10M paths</h3>
-        <p>Measured versions from the benchmark log. Pending versions are drawn empty until they are measured.</p>
+        <p>Official medians from the HP Pavilion (2 cores, 4 threads), measured before the standard error and delta were added. Pending versions are drawn empty until they are measured.</p>
         <svg id="timeChart" viewBox="0 0 520 260"></svg>
       </div>
     </div>
@@ -220,7 +220,7 @@
           </div>
           <div class="field">
             <label for="adNs">Cost per path, ns <small>used for time estimates</small></label>
-            <input id="adNs" type="number" min="1" step="1" value="81">
+            <input id="adNs" type="number" min="1" step="1" value="94">
           </div>
           <div class="form-actions">
             <button class="btn btn-sig" id="adSave" type="button">Save engine settings</button>

@@ -2,11 +2,13 @@
 
    Two modes, chosen by OE.config.baseUrl:
      ''            -> in-browser mock. Jobs run in a Web Worker doing the same
-                      Monte Carlo the C++ engine does, so the UI is fully
-                      demoable before the backend exists.
-     'http://...'  -> real backend. Endpoints Harsh needs to provide are listed
-                      in ENDPOINTS below; the shape of a job object is the
-                      contract between the two sides.
+                      Monte Carlo the C++ engine does, so the UI still works
+                      when the page is opened as a plain file.
+     'http://...'  -> real backend (backend/server.js), which runs the C++
+                      engine. Used automatically when the page is served over
+                      http, e.g. http://localhost:10241/app.html. Endpoints are
+                      listed in ENDPOINTS below; the shape of a job object is
+                      the contract between the two sides.
 
    Job object:
    {
@@ -16,13 +18,17 @@
      params: { type:'call'|'put', S, K, T, r, v, n, method:'mc'|'bs' },
      result: { price, stderr, ci95:[lo,hi], delta, elapsedMs, paths, threads, reference }
    }
+   (the real engine also sends referenceDelta, the exact Black-Scholes delta)
 */
 
 window.OE = (function () {
   var config = {
-    baseUrl: '',            // set to e.g. 'http://localhost:8000' when the backend is up
+    // Served by the backend (http) -> talk to it; opened as a file -> mock.
+    baseUrl: (location.protocol === 'http:' || location.protocol === 'https:') ? location.origin : '',
     pollMs: 900,
-    engine: { threads: 4, nsPerPath: 81, maxPaths: 100000000 }
+    // nsPerPath is per thread, chosen so the estimate for 10M paths on 4
+    // threads matches the official HP Pavilion median (234.451 ms).
+    engine: { threads: 4, nsPerPath: 94, maxPaths: 100000000 }
   };
 
   var ENDPOINTS = {
