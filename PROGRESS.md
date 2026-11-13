@@ -24,8 +24,8 @@
   economic/schedule/legal feasibility, and risk analysis.
 - **Starter frontend produced (1 Nov 2026)** on branch `frontend-starter`
   (static landing page + platform with pricing form, job queue, dashboard
-  and admin; backend contract in `frontend/js/api.js`). Waiting for Aryan's
-  review (see `ISSUES.md` #3).
+  and admin; backend contract in `frontend/js/api.js`). Merged into `main`
+  via PR #2.
 - **Multithreading finished (1–4 Nov 2026, branch `multithreading`).**
   - 1 Nov: path loop extracted into `simulate_chunk` (returns the sum of
     raw payoffs, takes its own seed).

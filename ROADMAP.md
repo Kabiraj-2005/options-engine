@@ -46,7 +46,7 @@ time runs short.
       contract, and prices puts as well as calls (ISSUES #4, done
       11 Nov 2026).
 
-## Backend and frontend (Utpal, since 10 Nov 2026)
+## Backend and frontend
 
 1. [x] Engine prints a JSON line for the backend (`--json`, 12 Nov 2026).
 2. [x] Node.js backend with the endpoints in `frontend/js/api.js`
@@ -57,7 +57,6 @@ time runs short.
 4. [x] Saved job history, settings and accounts (`data/`), sign-in with
        roles checked by the server, cancelling a running job, admin page
        working against the server (13 Nov 2026).
-5. [ ] Team decides how the Team section credits the work (ISSUES #3).
 
 These come before the speed work above, which needs the Pavilion
 (currently unavailable).
