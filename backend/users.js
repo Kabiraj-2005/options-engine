@@ -46,6 +46,34 @@ const TEAM = [
 ];
 const ROLE_LABEL = { analyst: 'Analyst', risk: 'Risk Manager', admin: 'Admin' };
 
+// Short, common words for easy-to-type passwords like "tiger-maple-4821".
+// About 250 words x 250 words x 10,000 numbers = about 635 million
+// possibilities (about 29 bits). With scrypt's deliberately slow hashing, guessing one from
+// its hash would take a long time, while it is still easy to read and type.
+const WORDS = (
+    'apple arrow badge baker bamboo banjo beach berry bird blaze bloom board boat bolt bones book ' +
+    'brave bread brick bridge brook brush cabin cactus cake camel candle canoe cargo carpet castle cedar ' +
+    'chalk chess chief cider cliff clock cloud clover coast cobra comet coral cotton crane creek crown ' +
+    'crystal daisy delta desert diamond dingo dolphin dragon dream drum eagle earth echo ember falcon fern ' +
+    'field flame flute forest fox frost garden gecko ginger glacier globe gold grape grove harbor hawk ' +
+    'hazel heron honey horizon island ivory jacket jade jaguar jasmine jelly jungle kayak kettle kite koala ' +
+    'ladder lagoon lake lantern lemon leopard lilac lily lime linen lion lotus lunar magnet mango maple ' +
+    'marble meadow melon meteor mint mirror monkey moon moss mountain mango nectar needle nest noble nova ' +
+    'oasis ocean olive onyx orange orbit orchid otter owl oyster paddle palm panda paper parrot peach ' +
+    'pearl pebble pepper piano pilot pine planet plum polar pony poppy prism puma pumpkin quartz quill ' +
+    'rabbit radar rain raven reef ribbon river robin rocket rose ruby saddle saffron sail salmon sand ' +
+    'saturn shadow shell silver sky slate snow solar spark spice spruce squid star stone storm sugar ' +
+    'summit sun swan tango tea thunder tiger timber topaz tower trail tulip tundra turtle valley velvet ' +
+    'violet volcano wagon walnut water wave whale willow wind winter wolf yak zebra zinc acorn amber anchor ' +
+    'aspen basil beacon birch bison blossom breeze bronze buffalo butter canyon cherry cinnamon cobalt ' +
+    'copper cosmos cricket dune elm emerald fig firefly harvest iris juniper lagoon lemur llama mammoth'
+).split(' ').filter(function (w, i, all) { return all.indexOf(w) === i; });
+
+function easyPassword() {
+    const pick = function () { return WORDS[crypto.randomInt(WORDS.length)]; };
+    return pick() + '-' + pick() + '-' + String(crypto.randomInt(10000)).padStart(4, '0');
+}
+
 function hashPassword(password, salt) {
     return crypto.scryptSync(password, salt, 64).toString('hex');
 }
@@ -118,9 +146,7 @@ function writeSeed() {
     TEAM.forEach(function (person) {
         ROLES.forEach(function (role) {
             const username = person.id + '.' + role;
-            // 9 random bytes = 72 bits, written as 12 letters/digits/-/_.
-            // Far too many possibilities to guess from the hash.
-            const password = crypto.randomBytes(9).toString('base64url');
+            const password = easyPassword();   // e.g. tiger-maple-4821
             accounts.push(makeAccount(username, role, password, person.name + ' (' + ROLE_LABEL[role] + ')'));
             lines.push(username.padEnd(16) + password);
         });
