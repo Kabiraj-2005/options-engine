@@ -7,7 +7,7 @@ is updated.
 ## Open
 
 ### 2. Is the C++ engine slower than the JavaScript version?
-*Found 15 Sep 2026. Owner: Utpal.*
+*Found 15 Sep 2026.*
 
 The historical single-threaded figure was 810 ms for 10M paths at `-O2`
 (26 Aug 2026); the 1-thread time on 4 Nov 2026 was 681.787 ms, for reasons
@@ -27,21 +27,8 @@ Possible causes if C++ really is slower (not yet measured):
 Pavilion, profile with `perf stat`, and only then replace the RNG if the
 profile supports it. Re-baseline in `BENCHMARKS.md` afterwards.
 
-### 3. Frontend ownership
-*Noted 15 Sep 2026. Owner: Aryan; since 10 Nov 2026, Utpal.*
-
-Update 10 Nov 2026: the frontend fixes and the backend are now being done
-by Utpal. The frontend (landing page plus platform with pricing form, job
-queue, dashboard and admin) has been in `main` since PR #2, and since
-13 Nov 2026 it is connected to the real engine through `backend/server.js`.
-
-Still open: the Team section of `frontend/index.html` and the Users table
-in `frontend/app.html` still describe the original split of work (Harsh:
-backend, Aryan: frontend). The team needs to decide how to describe who did
-what before submission.
-
 ### 6. 1-thread timing gap on the Mac (clang)
-*Found 4 Nov 2026. Owner: Utpal. Development machine only.*
+*Found 4 Nov 2026. Development machine only.*
 
 On the Mac, `monte_carlo_call_mt` with 1 thread took about 342 ms while
 `monte_carlo_call` took about 276 ms for the same work and price. Running
@@ -53,7 +40,7 @@ call before the 4 Nov change, so there is no sign that the official
 speedups are inflated by it. Look again during profiling.
 
 ### 7. Reason for the 810 → 682 ms drop is unknown
-*Found 4 Nov 2026. Owner: Utpal.*
+*Found 4 Nov 2026.*
 
 The 26 Aug single-threaded figure (810.05 ms) and the 4 Nov 1-thread median
 (681.787 ms) were not measured under the same conditions. Until the cause
