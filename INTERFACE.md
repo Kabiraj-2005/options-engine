@@ -138,8 +138,11 @@ but cannot be turned back into it.
 every start the server copies any of them that this computer's
 `data/users.json` does not have yet, matching by username. Existing local
 accounts are never overwritten or deleted, so a password changed locally
-stays changed. The passwords are random (12 characters, 72 bits, far too
-many to guess from a hash) and are sent to each person privately.
+stays changed. The passwords are random but easy to type: two common
+words and four digits, like `tiger-maple-4821` (about 635 million
+possibilities, roughly 29 bits; with scrypt's deliberately slow hashing,
+guessing one from its hash takes a long time). They are sent to each
+person privately.
 
 `node backend/users.js seed` makes new passwords for all 12 accounts: it
 rewrites `backend/seed-users.json` and writes the passwords to

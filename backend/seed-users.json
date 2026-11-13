@@ -3,84 +3,84 @@
   "username": "utpal.analyst",
   "name": "Utpal (Analyst)",
   "role": "analyst",
-  "salt": "286bafa84a1fe73a91eed64cf18c6735",
-  "hash": "1341f933efe964ccfa1c7b571f754884d7c79be0d31cf923376874f5b053b7420846e7609b0b551bce169cb94811336449c90cfb24bec23d9677019bc28248c7"
+  "salt": "dcf34c0fd33f9dfdb5b4a3a2d03cd034",
+  "hash": "73e5bd2763c9ecde57e47948378a4b3101f72ce1a450fe6172c6fcffd5f22e8686371921a21a40e99896f06bbaddb362df70b5c0b7c2f63ef82e5611584d5267"
  },
  {
   "username": "utpal.risk",
   "name": "Utpal (Risk Manager)",
   "role": "risk",
-  "salt": "e788b6284d13fb97697bc5f66ef1644b",
-  "hash": "5ee7ab206386d27c8d1706aeaf472a19bd3eb59684aed5ecd1d922c93ecb504c5c289820abe0972fb37daea53aa06ced1b06f90093fa008f73d4a81de171eb51"
+  "salt": "38f0655450b0b8a5a7346059762ef594",
+  "hash": "840dbdf21493f23d12a6d091c2e9fde45c27b81c53bc7209544cc154005db65e249b49c25c163cb47f9d65e8d42039a8665be21d3f7d3b2f595b24ce660b9be7"
  },
  {
   "username": "utpal.admin",
   "name": "Utpal (Admin)",
   "role": "admin",
-  "salt": "bb33562b09cd316eaba5384f7925a231",
-  "hash": "b2f1488b7819d525f0150be683aa251ee0d7acb6a558675293ce242d4bfa576951ace48cf6575f9b6afbd3056b99d713e16d95f1a4a87a0088b683a1b1a5ff1f"
+  "salt": "bc2caf050491a5fd476f332a7722676e",
+  "hash": "0473308186986d8b956668ea197f0b6d8b5d210cbebecaa5c08fce8faeac991608a892d44df3e60fff594133762d03c430ea28c8881f2eb9e641bfc8662d37e8"
  },
  {
   "username": "harsh.analyst",
   "name": "Harsh (Analyst)",
   "role": "analyst",
-  "salt": "3382df7621544c729319a9e70c267c52",
-  "hash": "ce673bc93b0af80257a8ec4ea1e7ae5e49f785a343a888444cda3de2e40514317609ba2eb84e4ae033960f7a04aedb69e31512a7b67de558a15df16d46323d02"
+  "salt": "c1d888103d732c15cface5f4087f989b",
+  "hash": "bb716d07a68ecec2744a2702370cbb4bbee906574100d99cd52751bcd939b32354b0f26712db025d77309bab3b63a6b2e57d2958c2d1961c5a1b5db7e9a9527c"
  },
  {
   "username": "harsh.risk",
   "name": "Harsh (Risk Manager)",
   "role": "risk",
-  "salt": "f3b695927c7527fd7bc149c05d8c42bf",
-  "hash": "714f0708b147ea5ad121172614b04a948156d8b1a69adcf56a5371730968917625042357ab1689a06c543e415d11920bbac675bfa6dde8979f706f73800922c0"
+  "salt": "8b667eddbcf9db83174b3b9e476c6ee9",
+  "hash": "fb0b86cb2c4427dc70de3a4ad65605ea2fdb221d4ad57124abffcd21e487d07ec76aba388dda2d949bcd73e6f0441e8855b12eec31e8ee848dcdc25db3ba2a2d"
  },
  {
   "username": "harsh.admin",
   "name": "Harsh (Admin)",
   "role": "admin",
-  "salt": "ec212fdba2e81d1ec05324e220a4eb72",
-  "hash": "47e1f1c6dff895f343b30702c063fbe2980c8201304fd832862ec8ca97d177562b4d36364acfcf727cf94a958b8066972a8ecae3ad5ab6bae5a6cd46ad20d8dc"
+  "salt": "e95d072302aa946237957cd13dbccf69",
+  "hash": "722b93c4cce77df58726fb12b6bfbdfa28efde477ba5a2f728a04c75b7224bd0d4aba2c8722e6fbc311d9be8f7d0c9256b90250ae54135bb1f13a83afa32df5d"
  },
  {
   "username": "aryan.analyst",
   "name": "Aryan (Analyst)",
   "role": "analyst",
-  "salt": "22db21de32cd90199a02ff8c33e871ea",
-  "hash": "9ae6c6ca5e7df8fdd398e8cde2499de214bf2cb0011d26d8c673bf87487847af1e69a6a95c970d5303f4d422428e2e16eb6a9298611384010d13c06033d80972"
+  "salt": "e329cb0ddfa408d67bc4f86ddc68a84d",
+  "hash": "331f19851f53b7b7fe0ef8531b32d4c983c7a684e78ca91e23be24a8a48560494485001b44993a31df98757e481ff78e2fb7dd3ec958d64f99d83bf2804c3a2b"
  },
  {
   "username": "aryan.risk",
   "name": "Aryan (Risk Manager)",
   "role": "risk",
-  "salt": "bb1335a4a8cae5e002b005c3c35c6e9e",
-  "hash": "b4fe48f9d9c7ffa1e96b53a448c9fe93032b10f3c89dbf66dfffb2b7f99a0fa544824b47c77d0769597d5e415766db4ccfaba2d7c5fadfea547e1efe12fb2ffb"
+  "salt": "9d9d53db2333a76d7a80245ff0704fa6",
+  "hash": "f36fc023711c0a1d2156fb0b153ad32cca771c37dc516426f83f4b384ec2f194b49ee5b6c5429440404df2dbf85a6c55ed0bb125f6bd8db46402d9d000e42968"
  },
  {
   "username": "aryan.admin",
   "name": "Aryan (Admin)",
   "role": "admin",
-  "salt": "b1f00214ab3e7d753aa0bc2f1947d49c",
-  "hash": "d5d75feab487d30dae5da9474d12db7afe6dcc8486c3946714574c6a2ff38160d93a62e61926f500d9b77fc88671ffc7629b12cd5a10f3284f35fdb95a843031"
+  "salt": "2d86cdac4106936b1f7d8594b2c8747c",
+  "hash": "8c7f4f27ff35db17d410e40afde603025ef51616fa478298a014c74de6ccee76665fac8dfef51ae047fab0e5ad5d00c7e8edef55c3bbdb6a92f80c59c36058bf"
  },
  {
   "username": "arya.analyst",
   "name": "Arya (Analyst)",
   "role": "analyst",
-  "salt": "5f362eeb5da31a21e8b6b89bb5de9eb1",
-  "hash": "71f564bbb2b88cda3f2b8c41b727eb4d7da0bdcb643a07a7a129312ccedc859a07d3069b4dbcc3d5c5853f22ddc3e9ebfa0dcb092b3259a2efe8ba137cf2a8a8"
+  "salt": "d17c9035b02a06c3c651a16813a19a34",
+  "hash": "acfb0349d4a812f000df9bec275c41f4c3d017b557abafaceb183ebbb28636f8ad6a2806b6631112b876b0ad6c941cedcdb12ba50f88fcad5e9db0d9b41f4400"
  },
  {
   "username": "arya.risk",
   "name": "Arya (Risk Manager)",
   "role": "risk",
-  "salt": "666dd453d3c38661fef19c022742ad81",
-  "hash": "baec24a97e5cc5f495d5602a3a9f5a0badc104f3f316ed2a12ef07c6e8a1ef0927cb9fc418f24861ce441efa581ea918f38fea3f798911e86d9a1d03271dd015"
+  "salt": "6ca353492cf144fc039dbd8bc7a5e95e",
+  "hash": "3f3ba93e5bf4d1355cf47c59a90d863beb4738a0dcdb7305d35b09267d1197f62fcb33709518d01370844b73b0d2c41450fb03e9254bf1bb1c5d940b7d651ac4"
  },
  {
   "username": "arya.admin",
   "name": "Arya (Admin)",
   "role": "admin",
-  "salt": "5f1f7c7e6bed0720993ae52faf457e02",
-  "hash": "99a32484cbf4ffb0dc830ce5a77ca58351155424c83db921fcbceefe7c52141e0b4cc1a53cf4fd908781ce8ca1de45a65173d66c3aeb15b1aab2d05f0dd3cfa2"
+  "salt": "9012385a710f76e5775d53c7e57f89bd",
+  "hash": "a763eb324c829defa20b281cc029e9d3bf247e5a4e1c140abf1940fbb77af3cdc86cae081d3816157f79bf11dfb0ba027622da0097fc90ba2e844b0ba7495785"
  }
 ]
