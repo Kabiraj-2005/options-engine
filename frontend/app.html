@@ -21,11 +21,17 @@
   </nav>
   <div class="foot">
     <label for="role">Signed in as</label>
+    <!-- Demo mode (page opened as a file): pick a role. With the backend the
+         role comes from the account you sign in with. -->
     <select id="role">
       <option value="analyst">Analyst</option>
       <option value="risk">Risk manager</option>
       <option value="admin">Admin</option>
     </select>
+    <div class="who" id="who" hidden>
+      <b id="whoName"></b><span id="whoRole"></span>
+      <button class="btn btn-sm btn-quiet" id="signOutBtn" type="button">Sign out</button>
+    </div>
     <div class="engine"><span class="dot" id="engineDot"></span><span id="engineText">Checking engine</span></div>
     <a class="back" href="index.html">Back to overview</a>
   </div>
@@ -230,15 +236,12 @@
       <div class="panel">
         <h3>Users</h3>
         <table class="users">
-          <thead><tr><th>Name</th><th>Role</th><th>Status</th></tr></thead>
-          <tbody>
-            <tr><td>Utpal Kabiraj</td><td>Admin</td><td>Active</td></tr>
-            <tr><td>Harsh Sonkar</td><td>Admin</td><td>Active</td></tr>
-            <tr><td>Aryan Harish Yadav</td><td>Analyst</td><td>Active</td></tr>
-            <tr><td>Arya</td><td>Risk manager</td><td>Active</td></tr>
+          <thead><tr><th>Name</th><th>Role</th><th>Username</th></tr></thead>
+          <tbody id="usersBody">
+            <tr><td colspan="3" style="color:var(--mute)">Sign in as admin to see the accounts.</td></tr>
           </tbody>
         </table>
-        <p style="color:var(--mute);font-size:13px;margin-top:14px">User management writes to the data layer once it exists. Until then this table is static.</p>
+        <p style="color:var(--mute);font-size:13px;margin-top:14px">Accounts are stored by the backend (<code>data/users.json</code>, passwords hashed). Add or remove them with <code>node backend/users.js</code>.</p>
         <h3 style="margin-top:32px">Queue</h3>
         <button class="btn" id="adClear" type="button">Cancel all queued jobs</button>
       </div>
@@ -253,6 +256,27 @@
 </aside>
 
 <div class="toast" id="toast" role="status"></div>
+
+<div class="login" id="login" hidden>
+  <form class="panel" id="loginForm" aria-labelledby="loginTitle">
+    <h3 id="loginTitle">Sign in</h3>
+    <p class="login-note">Your account decides what you can do: analysts price options, risk managers review results, admins manage the engine.</p>
+    <div class="fields">
+      <div class="field">
+        <label for="loginUser">Username</label>
+        <input id="loginUser" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="loginPass">Password</label>
+        <input id="loginPass" type="password" autocomplete="current-password" required>
+        <span class="err" id="loginErr"></span>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-sig" id="loginBtn" type="submit">Sign in</button>
+      </div>
+    </div>
+  </form>
+</div>
 
 <script src="js/api.js"></script>
 <script src="js/app.js"></script>

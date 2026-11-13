@@ -201,7 +201,7 @@ bool parse_decimal(const std::string& arg ,  double& out){
     return false ;
  }
 
- if(!isfinite(out)){
+ if(!std::isfinite(out)){
     return false ;
  }
 

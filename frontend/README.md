@@ -20,7 +20,7 @@ index.html      landing page: what the engine does, benchmarks, roles, team
 app.html        the platform: price an option, job queue, dashboard, admin
 css/styles.css  all styling, one file
 js/landing.js   hero simulation (real GBM paths + live Monte Carlo readout)
-js/api.js       API client. Mock engine in a Web Worker until the backend exists
+js/api.js       API client: real backend, or a mock engine in a Web Worker
 js/app.js       platform behaviour
 ```
 
@@ -28,15 +28,19 @@ js/app.js       platform behaviour
 
 `OE.config.baseUrl` in `js/api.js` is set automatically: when the page is
 served over http (by `backend/server.js`), it talks to that same server;
-when it is opened as a file, it uses the mock. The backend provides:
+when it is opened as a file, it uses the mock.
 
-| Endpoint | Body / returns |
-|---|---|
-| `POST /jobs` | body `{ params, submittedBy }`, returns a job |
-| `GET /jobs` | array of jobs, newest first |
-| `GET /jobs/:id` | one job |
-| `DELETE /jobs/:id` | cancels a queued job, 204 (409 if it is no longer queued) |
-| `GET /health` | `{ ok, mode, threads, engineBuilt, busy }` |
+With the backend, the platform first shows a **sign-in form**. The token
+from `POST /login` is kept in `sessionStorage` (this tab only) and sent as
+`Authorization: Bearer <token>` with every request. The account's role
+(analyst, risk, admin) decides which pages appear, and the server checks
+the role again on every request. A 401 brings the sign-in form back.
+
+The admin page loads the engine settings and the account list from the
+server and saves settings back (`PUT /admin/settings`). The cost-per-path
+figure only affects the time estimate in this browser.
+
+The full endpoint list, with who may call each, is in `INTERFACE.md`.
 
 A job looks like this (also documented at the top of `js/api.js`):
 

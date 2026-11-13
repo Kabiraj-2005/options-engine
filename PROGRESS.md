@@ -71,6 +71,15 @@
   `http://localhost:10241/app.html`. The frontend uses it automatically and
   its outdated benchmark claims were replaced with the official numbers
   (ISSUES #5). Tested end to end in a headless browser.
+- **Data layer, sign-in and roles (13 Nov 2026, branch `platform-finish`).**
+  Job history, admin settings and accounts are saved as JSON files in
+  `data/` and reloaded on start (job numbers and seeds carry on). Users sign
+  in; passwords are stored only as salted scrypt hashes; the server checks
+  each request's role (analyst / risk / admin). Admins change the engine
+  thread count and path cap from the admin page. A running job can be
+  cancelled (the engine process is stopped), and Ctrl+C stops a running
+  engine too. `isfinite` is now `std::isfinite`. Tested through the API and
+  in a headless browser.
 - **Mac per-path claim withdrawn (4 Nov 2026).** The old "~92 ns/path on the
   Mac, similar to Linux" figure matches a build without `-O2` (the VS Code
   run button), so it is no longer used as validation.

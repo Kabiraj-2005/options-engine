@@ -54,7 +54,10 @@ time runs short.
        `GET /health`), running `./pricer` (13 Nov 2026).
 3. [x] Frontend points at the backend; outdated claims fixed (ISSUES #5,
        13 Nov 2026).
-4. [ ] Team decides how the Team section credits the work (ISSUES #3).
+4. [x] Saved job history, settings and accounts (`data/`), sign-in with
+       roles checked by the server, cancelling a running job, admin page
+       working against the server (13 Nov 2026).
+5. [ ] Team decides how the Team section credits the work (ISSUES #3).
 
 These come before the speed work above, which needs the Pavilion
 (currently unavailable).

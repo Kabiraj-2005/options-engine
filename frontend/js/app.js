@@ -11,6 +11,7 @@
 
   /* ---------- state ---------- */
   var state = {
+    user: null,        // signed-in account (real backend only)
     role: 'analyst',
     view: 'price',
     type: 'call',
@@ -42,6 +43,7 @@
     });
     if (name === 'dash') renderDash();
     if (name === 'queue') renderQueue();
+    if (name === 'admin') loadAdmin();
   }
   navBtns.forEach(function (b) { b.addEventListener('click', function () { showView(b.dataset.view); }); });
 
@@ -50,12 +52,58 @@
     navBtns.forEach(function (b) { b.hidden = ROLE_VIEWS[role].indexOf(b.dataset.view) < 0; });
     showView(state.view);
   }
+  // Demo mode only: with the real backend the role comes from the account.
   $('role').addEventListener('change', function (e) { applyRole(e.target.value); toast('Signed in as ' + ROLE_NAME[e.target.value]); });
+
+  /* ---------- sign-in (real backend only) ---------- */
+  function signedIn(user) {
+    state.user = user;
+    $('login').hidden = true;
+    $('loginPass').value = '';
+    $('role').hidden = true;
+    $('who').hidden = false;
+    $('whoName').textContent = user.name;
+    $('whoRole').textContent = ROLE_NAME[user.role];
+    applyRole(user.role);
+    refresh();
+  }
+  function showSignIn(message) {
+    state.user = null;
+    state.jobs = [];
+    renderQueue();
+    $('who').hidden = true;
+    $('loginErr').textContent = message || '';
+    $('login').hidden = false;
+    $('loginUser').focus();
+  }
+  $('loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    $('loginBtn').disabled = true;
+    $('loginErr').textContent = '';
+    OE.account.login($('loginUser').value.trim(), $('loginPass').value).then(function (user) {
+      $('loginBtn').disabled = false;
+      signedIn(user);
+      toast('Signed in as ' + user.name + ' (' + ROLE_NAME[user.role] + ')');
+    }).catch(function (err) {
+      $('loginBtn').disabled = false;
+      $('loginErr').textContent = err.message;
+    });
+  });
+  $('signOutBtn').addEventListener('click', function () {
+    OE.account.logout().then(function () { showSignIn(); });
+  });
+  OE.account.onSignedOut(function () { if (state.user) showSignIn('Your session ended. Please sign in again.'); });
 
   /* ---------- engine status ---------- */
   OE.health().then(function (h) {
     $('engineDot').className = 'dot' + (OE.isMock() ? ' off' : '');
-    if (!OE.isMock()) { OE.config.engine.threads = h.threads; renderPreview(); }
+    if (!OE.isMock()) {
+      OE.config.engine.threads = h.threads;
+      OE.config.engine.maxPaths = h.maxPaths;
+      renderPreview();
+      // already signed in in this tab? otherwise ask
+      OE.account.me().then(signedIn).catch(function () { showSignIn(); });
+    }
     $('engineText').textContent = OE.isMock() ? 'Browser engine, ' + h.threads + ' threads' : 'C++ engine online, ' + h.threads + ' threads';
     $('mockNotice').hidden = !OE.isMock();
   }).catch(function () {
@@ -182,9 +230,11 @@
     $('jobsTable').style.display = jobs.length ? '' : 'none';
     body.innerHTML = jobs.map(function (j) {
       var r = j.result, p = j.params;
-      var canCancel = j.status === 'queued' && (state.role === 'admin' || state.role === 'analyst');
+      // the real backend can also stop a running job; the browser mock cannot
+      var cancellable = j.status === 'queued' || (j.status === 'running' && !OE.isMock());
+      var canCancel = cancellable && (state.role === 'admin' || state.role === 'analyst');
       return '<tr data-id="' + j.id + '">' +
-        '<td><b>' + j.id + '</b><span class="sub">' + j.submittedBy + ', ' + new Date(j.submittedAt).toLocaleTimeString() + '</span></td>' +
+        '<td><b>' + j.id + '</b><span class="sub">' + escapeHtml(j.submittedBy) + ', ' + new Date(j.submittedAt).toLocaleTimeString() + '</span></td>' +
         '<td>' + statusPill(j) + '</td>' +
         '<td>' + contractLabel(p) + '<span class="sub">r=' + p.r + ', v=' + p.v + (p.method === 'bs' ? ', Black-Scholes' : '') + '</span></td>' +
         '<td class="num">' + (p.method === 'bs' ? '—' : fmt.int(p.n)) + '</td>' +
@@ -201,7 +251,8 @@
     var c = e.target.closest('[data-cancel]');
     if (c) {
       e.stopPropagation();
-      OE.cancel(c.dataset.cancel).then(function () { toast('Cancelled ' + c.dataset.cancel); refresh(); });
+      OE.cancel(c.dataset.cancel).then(function () { toast('Cancelled ' + c.dataset.cancel); refresh(); })
+        .catch(function (err) { toast(err.message); refresh(); });
       return;
     }
     var row = e.target.closest('tr[data-id]');
@@ -210,6 +261,7 @@
   $('refreshBtn').addEventListener('click', refresh);
 
   function refresh() {
+    if (!OE.isMock() && !state.user) return Promise.resolve();   // not signed in yet
     return OE.list().then(function (jobs) {
       state.jobs = jobs;
       renderQueue();
@@ -240,7 +292,7 @@
     if (!j) return;
     var p = j.params, r = j.result, html = '';
     html += '<h2>' + j.id + '</h2>';
-    html += '<div class="meta">' + contractLabel(p) + ', r=' + p.r + ', v=' + p.v + '. Submitted by ' + j.submittedBy + ' at ' + new Date(j.submittedAt).toLocaleTimeString() + '.</div>';
+    html += '<div class="meta">' + contractLabel(p) + ', r=' + p.r + ', v=' + p.v + '. Submitted by ' + escapeHtml(j.submittedBy) + ' at ' + new Date(j.submittedAt).toLocaleTimeString() + '.</div>';
     html += statusPill(j);
     if (r) {
       var err = Math.abs(r.price - r.reference);
@@ -256,7 +308,7 @@
       html += '<div class="vs">Black-Scholes says <b>' + fmt.p(r.reference) + '</b>. This run is off by <b>' + fmt.p(err) + '</b>' +
         (r.stderr ? (err <= 1.96 * r.stderr ? ', inside its own 95% interval.' : ', outside its 95% interval, which happens about 1 run in 20.') : '.') + '</div>';
     } else if (j.status === 'failed') {
-      html += '<p style="margin-top:18px;color:var(--paper-2)">' + (j.error || 'The engine did not return a result.') + '</p>';
+      html += '<p style="margin-top:18px;color:var(--paper-2)">' + escapeHtml(j.error || 'The engine did not return a result.') + '</p>';
     } else {
       html += '<p style="margin-top:18px;color:var(--mute)">Waiting on the engine. Estimated ' + fmt.ms(OE.estimateMs(p.n)) + ' once it starts.</p>';
     }
@@ -346,13 +398,39 @@
   }
 
   /* ---------- admin ---------- */
+  // With the real backend the settings and accounts live on the server; the
+  // page loads them when the admin view opens. (nsPerPath only affects the
+  // time estimate in this browser.)
+  function loadAdmin() {
+    if (OE.isMock() || !state.user || state.user.role !== 'admin') return;
+    OE.account.getSettings().then(function (s) {
+      $('adThreads').value = s.threads;
+      $('adMax').value = s.maxPaths;
+    }).catch(function (err) { toast(err.message); });
+    OE.account.users().then(function (list) {
+      $('usersBody').innerHTML = list.map(function (u) {
+        return '<tr><td>' + escapeHtml(u.name) + '</td><td>' + ROLE_NAME[u.role] + '</td><td>' + escapeHtml(u.username) + '</td></tr>';
+      }).join('');
+    }).catch(function (err) { toast(err.message); });
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function applySettings(th, mx, ns) {
+    OE.config.engine.threads = th; OE.config.engine.maxPaths = mx; OE.config.engine.nsPerPath = ns;
+    $('engineText').textContent = (OE.isMock() ? 'Browser engine, ' : 'C++ engine online, ') + th + ' threads';
+    renderPreview();
+    toast('Engine settings saved');
+  }
   $('adSave').addEventListener('click', function () {
     var th = parseInt($('adThreads').value, 10), mx = parseInt($('adMax').value, 10), ns = parseFloat($('adNs').value);
     if (!(th >= 1) || !(mx >= 1000) || !(ns > 0)) { toast('Check the engine settings'); return; }
-    OE.config.engine.threads = th; OE.config.engine.maxPaths = mx; OE.config.engine.nsPerPath = ns;
-    $('engineText').textContent = (OE.isMock() ? 'Browser engine, ' : 'Engine online, ') + th + ' threads';
-    renderPreview();
-    toast('Engine settings saved');
+    if (OE.isMock()) { applySettings(th, mx, ns); return; }
+    OE.account.saveSettings({ threads: th, maxPaths: mx }).then(function (s) {
+      applySettings(s.threads, s.maxPaths, ns);
+    }).catch(function (err) { toast(err.message); });
   });
   $('adClear').addEventListener('click', function () {
     var q = state.jobs.filter(function (j) { return j.status === 'queued'; });
