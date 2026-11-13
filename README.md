@@ -13,12 +13,15 @@ g++ -std=c++17 -O2 -pthread src/pricer.cpp -o pricer
 node backend/server.js
 ```
 
-Then open `http://localhost:10241/app.html` and sign in. On first start the
-server creates three demo accounts (`analyst`, `risk`, `admin`) and writes
-their passwords to `data/demo-passwords.txt`. Manage accounts with
-`node backend/users.js`. Job history, settings and accounts are saved in
-`data/` (not in git), so they survive a restart. Stop the server with
-Ctrl+C.
+Then open `http://localhost:10241/app.html` and sign in. Each team member
+has three accounts, one per role: `<name>.analyst`, `<name>.risk` and
+`<name>.admin` (`<name>` is `utpal`, `harsh`, `aryan` or `arya`). The
+passwords are sent to each person privately and are never in git: the
+repository only holds their one-way hashes, in `backend/seed-users.json`,
+and the server adds any missing team account to your computer when it
+starts. Extra local accounts: `node backend/users.js add ...`. Job history,
+settings and accounts are saved in `data/` (not in git), so they survive a
+restart. Stop the server with Ctrl+C. Full first-time guide: `SETUP.md`.
 
 Needs `g++` and Node.js (no npm packages). Details in `INTERFACE.md`.
 

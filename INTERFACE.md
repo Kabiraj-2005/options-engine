@@ -126,16 +126,40 @@ The server checks the role on every request, so hiding a page in the
 browser is not the only protection: a risk manager who calls `POST /jobs`
 directly gets 403.
 
-Accounts are in `data/users.json`. Passwords are not stored: each account
-has a random salt and the scrypt hash of salt + password. On first start,
-when there are no accounts, the server creates `analyst`, `risk` and
-`admin` with random passwords and writes them to
-`data/demo-passwords.txt`. Manage accounts with:
+Accounts are in `data/users.json` (one copy per computer, not in git).
+Passwords are not stored: each account has a random salt and the scrypt
+hash of salt + password. A hash is one-way: it can check a typed password
+but cannot be turned back into it.
+
+**Team accounts.** `backend/seed-users.json` is tracked in git and holds
+12 accounts, one per team member per role (`utpal`, `harsh`, `aryan`,
+`arya` × `.analyst`, `.risk`, `.admin`, display names like
+"Harsh (Risk Manager)"), as username, name, role, salt and hash only. On
+every start the server copies any of them that this computer's
+`data/users.json` does not have yet, matching by username. Existing local
+accounts are never overwritten or deleted, so a password changed locally
+stays changed. The passwords are random (12 characters, 72 bits, far too
+many to guess from a hash) and are sent to each person privately.
+
+`node backend/users.js seed` makes new passwords for all 12 accounts: it
+rewrites `backend/seed-users.json` and writes the passwords to
+`data/team-passwords.txt` (not in git, readable only by its owner). Commit
+the new seed file; each computer picks up accounts it does not have on its
+next start. (An account a computer already has keeps its old password
+there; remove it with `node backend/users.js remove <username>` and
+restart to take the new one.)
+
+**Demo accounts.** Only when there is no seed file and no local account at
+all does the server create `analyst`, `risk` and `admin` with random
+passwords, written to `data/demo-passwords.txt`.
+
+Manage accounts on one computer with:
 
 ```
 node backend/users.js list
 node backend/users.js add <username> <role> <password> [display name]
 node backend/users.js remove <username>
+node backend/users.js seed
 ```
 
 ### Endpoints
@@ -186,7 +210,8 @@ from 1,000 to the `maxPaths` setting (default 100,000,000).
 | `jobs.json` | job history; reloaded on start. Job numbers (and so seeds) carry on from the highest saved one. A job that was running when the server stopped is marked `failed` ("Server stopped while this job was running"); queued jobs run when the server starts again. The oldest finished jobs are dropped after 500. |
 | `settings.json` | `threads` and `maxPaths` from the admin page (`THREADS=...` overrides threads at start) |
 | `users.json` | accounts (hashed passwords) |
-| `demo-passwords.txt` | passwords of the demo accounts created on first start |
+| `team-passwords.txt` | only on the computer that ran `users.js seed`: the team passwords, to send privately |
+| `demo-passwords.txt` | only if demo accounts were created (no team accounts): their passwords |
 
 Files are written to a temporary file and then renamed, so a crash cannot
 leave half a file. A file that cannot be read is renamed aside, not

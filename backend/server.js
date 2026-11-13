@@ -442,6 +442,11 @@ const server = http.createServer(function (req, res) {
 server.listen(PORT, function () {
     console.log('backend listening on http://localhost:' + PORT + '  (platform: http://localhost:' + PORT + '/app.html)');
     console.log('data folder: ' + store.DATA_DIR + '  (' + jobs.length + ' saved jobs, engine threads: ' + settings.threads + ')');
+    // Team accounts from backend/seed-users.json: add the ones this machine
+    // does not have yet. Existing local accounts are left exactly as they are.
+    const added = users.mergeSeedUsers();
+    if (added.length) console.log('added ' + added.length + ' team account(s) from backend/seed-users.json: ' + added.join(', '));
+    // Only if there are no team accounts at all (and no local ones): demo accounts.
     const created = users.ensureDemoUsers();
     if (created) console.log('first start: created demo accounts analyst / risk / admin; passwords are in ' + created);
     if (!fs.existsSync(PRICER)) {
