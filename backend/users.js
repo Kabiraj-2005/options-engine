@@ -10,17 +10,41 @@
    way and compares. scrypt is deliberately slow, which makes guessing
    passwords from a stolen users.json expensive.
 
+   Team accounts ("seed" accounts):
+     backend/seed-users.json is tracked in git and holds the team's accounts
+     as username, display name, role, salt and hash only, never a password.
+     A hash is a one-way fingerprint: it can check a typed password but
+     cannot be turned back into one, so it is safe to share. On every start
+     the server copies any seed account that is missing from this machine's
+     data/users.json; accounts already there are never changed or removed.
+     The passwords themselves are sent to each person privately.
+
    Command line (run from the project folder):
      node backend/users.js list
      node backend/users.js add <username> <role> <password> [display name]
      node backend/users.js remove <username>
+     node backend/users.js seed      new passwords for all team accounts:
+                                     rewrites backend/seed-users.json and
+                                     writes data/team-passwords.txt
 */
 
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 const store = require('./store');
 
 const ROLES = ['analyst', 'risk', 'admin'];
 const FILE = 'users.json';
+const SEED_FILE = path.join(__dirname, 'seed-users.json');
+
+// The team: one account per person per role, e.g. utpal.analyst.
+const TEAM = [
+    { id: 'utpal', name: 'Utpal' },
+    { id: 'harsh', name: 'Harsh' },
+    { id: 'aryan', name: 'Aryan' },
+    { id: 'arya',  name: 'Arya' }
+];
+const ROLE_LABEL = { analyst: 'Analyst', risk: 'Risk Manager', admin: 'Admin' };
 
 function hashPassword(password, salt) {
     return crypto.scryptSync(password, salt, 64).toString('hex');
@@ -37,15 +61,81 @@ function checkNewUser(username, role, password) {
     return null;
 }
 
-// Adds an account, or replaces it if the username already exists.
-function addUser(username, role, password, name) {
+// Builds one stored account: a fresh random salt and the hash of
+// salt + password. The password itself is not kept.
+function makeAccount(username, role, password, name) {
     const problem = checkNewUser(username, role, password);
     if (problem) throw new Error(problem);
-    const users = loadUsers().filter(function (u) { return u.username !== username; });
     const salt = crypto.randomBytes(16).toString('hex');
-    users.push({ username: username, name: name || username, role: role,
-                 salt: salt, hash: hashPassword(password, salt) });
+    return { username: username, name: name || username, role: role,
+             salt: salt, hash: hashPassword(password, salt) };
+}
+
+// Adds an account, or replaces it if the username already exists.
+function addUser(username, role, password, name) {
+    const account = makeAccount(username, role, password, name);
+    const users = loadUsers().filter(function (u) { return u.username !== username; });
+    users.push(account);
     store.writeJson(FILE, users);
+}
+
+// The team accounts from backend/seed-users.json ([] if the file is missing).
+function loadSeedUsers() {
+    try {
+        return JSON.parse(fs.readFileSync(SEED_FILE, 'utf8'));
+    } catch (e) {
+        if (e.code === 'ENOENT') return [];
+        throw new Error(SEED_FILE + ' is not valid JSON: ' + e.message);
+    }
+}
+
+// Server start: copy every seed account that this machine does not have yet.
+// Matching is by username. Existing accounts are never overwritten or
+// deleted, so a password someone changed locally stays changed.
+// Returns the usernames that were added.
+function mergeSeedUsers() {
+    const users = loadUsers();
+    const have = new Set(users.map(function (u) { return u.username; }));
+    const added = [];
+    loadSeedUsers().forEach(function (s) {
+        if (have.has(s.username)) return;
+        if (ROLES.indexOf(s.role) < 0 || !s.salt || !s.hash) return;   // skip damaged entries
+        users.push({ username: s.username, name: s.name, role: s.role, salt: s.salt, hash: s.hash });
+        have.add(s.username);
+        added.push(s.username);
+    });
+    if (added.length) store.writeJson(FILE, users);
+    return added;
+}
+
+// `node backend/users.js seed`: new random passwords for all 12 team
+// accounts. The hashes go to backend/seed-users.json (committed); the
+// passwords go to data/team-passwords.txt (never committed), to be sent to
+// each person privately. Running it again replaces everything.
+function writeSeed() {
+    const accounts = [];
+    const lines = [];
+    TEAM.forEach(function (person) {
+        ROLES.forEach(function (role) {
+            const username = person.id + '.' + role;
+            // 9 random bytes = 72 bits, written as 12 letters/digits/-/_.
+            // Far too many possibilities to guess from the hash.
+            const password = crypto.randomBytes(9).toString('base64url');
+            accounts.push(makeAccount(username, role, password, person.name + ' (' + ROLE_LABEL[role] + ')'));
+            lines.push(username.padEnd(16) + password);
+        });
+    });
+    const tmp = SEED_FILE + '.tmp';
+    fs.writeFileSync(tmp, JSON.stringify(accounts, null, 1) + '\n');
+    fs.renameSync(tmp, SEED_FILE);
+
+    fs.mkdirSync(store.DATA_DIR, { recursive: true });
+    const passFile = store.file('team-passwords.txt');
+    fs.writeFileSync(passFile,
+        'Team account passwords (username, password). Generated ' + new Date().toISOString() + '.\n' +
+        'Send each person their three lines privately. This file is not in git.\n\n' +
+        lines.join('\n') + '\n', { mode: 0o600 });   // readable by this user only
+    return { count: accounts.length, seedFile: SEED_FILE, passFile: passFile };
 }
 
 function removeUser(username) {
@@ -71,10 +161,11 @@ function listUsers() {
     return loadUsers().map(function (u) { return { username: u.username, name: u.name, role: u.role }; });
 }
 
-// First start: no accounts yet, so create one per role with a random
-// password, and save the passwords where only this machine can read them.
+// Fallback for a copy with no team accounts at all (no seed file) and no
+// local accounts: create one per role with a random password, and save the
+// passwords where only this machine can read them.
 function ensureDemoUsers() {
-    if (loadUsers().length > 0) return null;
+    if (loadSeedUsers().length > 0 || loadUsers().length > 0) return null;
     const lines = [];
     ROLES.forEach(function (role) {
         const password = crypto.randomBytes(6).toString('base64url');
@@ -87,7 +178,7 @@ function ensureDemoUsers() {
     return store.file('demo-passwords.txt');
 }
 
-module.exports = { ROLES, addUser, removeUser, verify, listUsers, ensureDemoUsers };
+module.exports = { ROLES, addUser, removeUser, verify, listUsers, ensureDemoUsers, mergeSeedUsers };
 
 
 /* ---------- command line ---------- */
@@ -104,10 +195,17 @@ if (require.main === module) {
             console.log('saved ' + username + ' (' + role + ')');
         } else if (command === 'remove') {
             console.log(removeUser(username) ? 'removed ' + username : 'no user ' + username);
+        } else if (command === 'seed') {
+            const r = writeSeed();
+            console.log('wrote ' + r.count + ' team accounts (hashes only) to ' + r.seedFile);
+            console.log('passwords are in ' + r.passFile + ' (not in git); send them privately');
+            console.log('every copy picks up missing team accounts the next time its server starts');
         } else {
             console.log('usage:\n  node backend/users.js list\n' +
                         '  node backend/users.js add <username> <role> <password> [display name]\n' +
-                        '  node backend/users.js remove <username>\nroles: ' + ROLES.join(', '));
+                        '  node backend/users.js remove <username>\n' +
+                        '  node backend/users.js seed     (new passwords for all team accounts)\n' +
+                        'roles: ' + ROLES.join(', '));
             process.exitCode = 1;
         }
     } catch (e) {
