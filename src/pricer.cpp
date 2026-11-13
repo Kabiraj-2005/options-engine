@@ -29,13 +29,25 @@ if(is_put){
 
 return S* norm_cdf (d1) - K*std::exp(-r*T)*norm_cdf(d2);
 }// the Black Scholles formula: used for computing the price of europeans options. S:Current stock price , K: Strike Price , T : Time to Expiry(years), r : Risk-free interest rate, what you would earn on a safe investment.
-// v: Volatility 
-// d1 and d2 are the soluions of the differential equation. 
+// v: Volatility
+// d1 and d2 are the soluions of the differential equation.
+
+// Exact Black-Scholes delta: how much the option price moves when the share
+// price S moves by 1. Call: N(d1). Put: N(d1) - 1.
+double black_scholes_delta(double S , double K , double T , double r , double v , bool is_put){
+double d1 = (std::log(S/K) + (r+0.5*v*v)*T) / (v* std::sqrt(T));
+if(is_put){
+    return norm_cdf(d1) - 1.0;
+}
+return norm_cdf(d1);
+}
+
 class PriceResult{
 public:
 
-    double price ; 
-    double std_err ; 
+    double price ;
+    double std_err ;
+    double delta ;      // Monte Carlo estimate of delta (pathwise method)
 
 };
 
@@ -43,33 +55,42 @@ class ChunkResult{
     public:
     double sum ;
     double sum_sq ;
+    double sum_delta ;  // sum over paths of d(payoff)/dS, before discounting
 };
 
 ChunkResult  simulate_chunk(double S , double K ,double T, double r , double v , long long n_paths , unsigned seed , bool is_put ){
 std::mt19937 rng(seed);
 std::normal_distribution<double> norm(0.0 , 1.0);
 double sum = 0.0;
-double sum_sq = 0.0; 
+double sum_sq = 0.0;
+double sum_delta = 0.0;
 double payoff = 0.0 ;
- 
+
 
 for(long long  i = 0 ; i < n_paths ; i++){
 double z = norm(rng);
-double ST = S*std::exp((r-0.5*v*v)*T+v*std::sqrt(T)*z);
+double growth = std::exp((r-0.5*v*v)*T+v*std::sqrt(T)*z);   // ST / S
+double ST = S*growth;
 
+// Pathwise delta: ST = S*growth, so moving S by 1 moves ST by growth.
+// A call's payoff then moves by growth if it finished above K (else 0);
+// a put's moves by -growth if it finished below K (else 0).
 if(is_put){
      payoff = std::max(K-ST, 0.0) ;
+     if(ST < K){ sum_delta = sum_delta - growth; }
 }else{
- payoff = std::max(ST-K , 0.0) ; 
+ payoff = std::max(ST-K , 0.0) ;
+     if(ST > K){ sum_delta = sum_delta + growth; }
 }
-sum = sum + payoff ; 
+sum = sum + payoff ;
 sum_sq = sum_sq + (payoff*payoff);
 
 }
 ChunkResult result ;
 
 result.sum = sum ;
-result.sum_sq = sum_sq ; 
+result.sum_sq = sum_sq ;
+result.sum_delta = sum_delta ;
 
 return result ;
 
@@ -78,9 +99,9 @@ return result ;
 
 }
 
-// Turns raw totals into a price and its standard error.
+// Turns raw totals into a price, its standard error and delta.
 // Used by both the single-threaded and the multithreaded pricer.
-PriceResult finish(double total_sum, double total_sq_sum, long long n, double r, double T){
+PriceResult finish(double total_sum, double total_sq_sum, double total_delta_sum, long long n, double r, double T){
     double discount = std::exp(-r*T);
     double mean = total_sum / (double)n;
     double variance = total_sq_sum / (double)n - mean*mean;
@@ -90,13 +111,14 @@ PriceResult finish(double total_sum, double total_sq_sum, long long n, double r,
     PriceResult result;
     result.price = discount * mean;
     result.std_err = std_error;
+    result.delta = discount * total_delta_sum / (double)n;
     return result;
 }
 
 PriceResult monte_carlo_call(double S , double K , double T , double r, double v , long long  n , unsigned seed, bool is_put){
 
     ChunkResult chunk = simulate_chunk(S,K,T,r,v,n,seed,is_put) ;
-    return finish(chunk.sum, chunk.sum_sq, n, r, T);
+    return finish(chunk.sum, chunk.sum_sq, chunk.sum_delta, n, r, T);
 
 
 }
@@ -111,6 +133,7 @@ PriceResult monte_carlo_call_mt(double S , double K , double T , double r , doub
 
     double total_sum = 0.0 ; 
     double total_sq_sum = 0.0 ;
+    double total_delta_sum = 0.0 ;
 
 
     for(int t = 0 ; t < n_threads ; t++){
@@ -140,9 +163,10 @@ PriceResult monte_carlo_call_mt(double S , double K , double T , double r , doub
     for(int t = 0 ; t < n_threads ; t++){
         total_sum = total_sum + sums[t].sum;
         total_sq_sum = total_sq_sum + sums[t].sum_sq;
+        total_delta_sum = total_delta_sum + sums[t].sum_delta;
 
     }
-        return finish(total_sum, total_sq_sum, n, r, T);
+        return finish(total_sum, total_sq_sum, total_delta_sum, n, r, T);
 
 }
 // Turns text into a whole number. Only plain digits are accepted, so "-1",
@@ -200,8 +224,10 @@ std::cerr << "usage: " << prog << " <threads> [--bench] [--seed N] [--paths N]\n
           << "  --v X       volatility, e.g. 0.30 for 30%, above 0 (default 0.30)\n"
           << "  --put       price a put instead of a call\n"
           << "  --json      run only the multithreaded pricer and print one JSON line:\n"
-          << "              {\"price\":..,\"stderr\":..,\"ci95\":[lo,hi],\"reference\":..,\n"
-          << "               \"elapsedMs\":..,\"paths\":..,\"threads\":..}" << std::endl;
+          << "              {\"price\":..,\"stderr\":..,\"ci95\":[lo,hi],\"delta\":..,\"reference\":..,\n"
+          << "               \"referenceDelta\":..,\"elapsedMs\":..,\"paths\":..,\"threads\":..}\n"
+          << "  --exact     no simulation: print the Black-Scholes price and delta as one\n"
+          << "              JSON line in the same format (stderr 0, paths 0)" << std::endl;
 }
 
 int main(int argc, char* argv[])
@@ -214,6 +240,7 @@ if(argc < 2 || !parse_whole(argv[1], std::numeric_limits<int>::max(), value) || 
 int n_threads = (int)value;
 bool bench = false;
 bool json = false ;
+bool exact = false ;
 bool is_put = false ;
 unsigned seed = 42;
 long long n = 10000000;
@@ -227,7 +254,9 @@ for(int i = 2 ; i < argc ; i++){
         bench = true;
     }else if(opt == "--json"){
         json = true;
-        
+
+    }else if(opt == "--exact"){
+        exact = true;
     }else if(opt == "--put"){
 
         is_put = true;
@@ -266,6 +295,28 @@ for(int i = 2 ; i < argc ; i++){
 
 
 try{
+   if(exact){
+    // Black-Scholes only (the frontend's "bs" method): no paths, no sampling
+    // error, so the interval is just the price itself.
+    auto start = std::chrono::steady_clock::now();
+    double exact_price = black_scholes(S,K,T,r,v,is_put);
+    double exact_delta = black_scholes_delta(S,K,T,r,v,is_put);
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double, std::milli> elapsed = end - start ;
+
+    std::cout << std::fixed << std::setprecision(6)
+              << "{\"price\":"           << exact_price
+              << ",\"stderr\":0"
+              << ",\"ci95\":["           << exact_price << "," << exact_price << "]"
+              << ",\"delta\":"           << exact_delta
+              << ",\"reference\":"       << exact_price
+              << ",\"referenceDelta\":"  << exact_delta
+              << ",\"elapsedMs\":"       << std::setprecision(3) << elapsed.count()
+              << ",\"paths\":0"
+              << ",\"threads\":1"
+              << "}" << std::endl;
+    return 0;
+   }
    if(json){
     auto start = std::chrono::steady_clock::now();
     PriceResult mt = monte_carlo_call_mt(S,K,T,r,v,n,n_threads,seed,is_put);
@@ -283,7 +334,9 @@ try{
               << "{\"price\":"      << mt.price
               << ",\"stderr\":"     << mt.std_err
               << ",\"ci95\":["      << low << "," << high << "]"
+              << ",\"delta\":"      << mt.delta
               << ",\"reference\":"  << exact_price
+              << ",\"referenceDelta\":" << black_scholes_delta(S,K,T,r,v,is_put)
               << ",\"elapsedMs\":"  << std::setprecision(3) << elapsed.count()
               << ",\"paths\":"      << n
               << ",\"threads\":"    << n_threads
@@ -330,6 +383,8 @@ try{
               << "   time " << std::setprecision(3) << elapsed_mt.count() << " ms"
               << "   (" << n_threads << " threads)\n"
               << "95% interval (multithreaded):     " << std::setprecision(4) << low << " to " << high << "\n"
+              << "Delta (multithreaded):            " << mt_price.delta
+              << "   Black-Scholes delta: " << black_scholes_delta(S,K,T,r,v,is_put) << "\n"
               << "Speedup (this single run, not the official benchmark): "
               << std::setprecision(2) << elapsed_st.count() / elapsed_mt.count() << "x" << std::endl;
 }catch(const std::exception& e){
