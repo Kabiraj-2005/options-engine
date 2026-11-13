@@ -92,10 +92,12 @@ Errors: a missing or invalid number, or an unknown option, prints a usage
 message to stderr and exits with code 1. If the threads cannot be started,
 it prints `error: ...` to stderr and exits with code 1.
 
-## The backend (`backend/server.js`, 13 Nov 2026)
+## The backend (`backend/`, 13 Nov 2026)
 
-Node.js, built-in modules only (nothing to install). Run from the project
-folder after building the engine:
+Node.js, built-in modules only (nothing to install), in three files:
+`server.js` (routes and the job queue), `store.js` (saving to disk) and
+`users.js` (accounts). Run from the project folder after building the
+engine:
 
 ```
 g++ -std=c++17 -O2 -pthread src/pricer.cpp -o pricer
@@ -103,43 +105,100 @@ node backend/server.js
 ```
 
 It listens on port **10241** (from roll number 1024170034; override with
-`PORT=...`) and runs the engine with **4 threads** (override with
-`THREADS=...`). It also serves the frontend, so the platform is at
-`http://localhost:10241/app.html`.
+`PORT=...`). It also serves the frontend, so the platform is at
+`http://localhost:10241/app.html`. Stop it with Ctrl+C; a running engine
+process is stopped with it.
 
-| Endpoint | Does | Replies |
-|---|---|---|
-| `GET /health` | is the server up? | `{ok, mode, threads, engineBuilt, busy}` |
-| `POST /jobs` | body `{params, submittedBy}`; checks the params and queues a job | 201 + the job, or 400 + `{error}` |
-| `GET /jobs` | all jobs, newest first | array of jobs |
-| `GET /jobs/:id` | one job | the job, or 404 |
-| `DELETE /jobs/:id` | cancels a queued job | 204; 409 if it is no longer queued; 404 if unknown |
+### Signing in and roles
+
+Every request except `/health` and `/login` needs a signed-in user: the
+browser sends `Authorization: Bearer <token>`, where the token came from
+`POST /login`. Tokens are random, kept in the server's memory for 12 hours,
+and forgotten on restart (everyone signs in again).
+
+| Role | Can |
+|---|---|
+| `analyst` | price options, see jobs, cancel jobs |
+| `risk` | see jobs and the dashboard only |
+| `admin` | everything, plus engine settings and the account list |
+
+The server checks the role on every request, so hiding a page in the
+browser is not the only protection: a risk manager who calls `POST /jobs`
+directly gets 403.
+
+Accounts are in `data/users.json`. Passwords are not stored: each account
+has a random salt and the scrypt hash of salt + password. On first start,
+when there are no accounts, the server creates `analyst`, `risk` and
+`admin` with random passwords and writes them to
+`data/demo-passwords.txt`. Manage accounts with:
+
+```
+node backend/users.js list
+node backend/users.js add <username> <role> <password> [display name]
+node backend/users.js remove <username>
+```
+
+### Endpoints
+
+| Endpoint | Who | Does | Replies |
+|---|---|---|---|
+| `GET /health` | anyone | is the server up? | `{ok, mode, threads, maxPaths, engineBuilt, busy, signInRequired}` |
+| `POST /login` | anyone | body `{username, password}` | `{token, user}`, or 401 |
+| `POST /logout` | signed in | ends the session | 204 |
+| `GET /me` | signed in | who am I | `{username, name, role}` |
+| `POST /jobs` | analyst, admin | body `{params}`; checks the params and queues a job | 201 + the job, or 400 + `{error}` |
+| `GET /jobs` | signed in | all jobs, newest first | array of jobs |
+| `GET /jobs/:id` | signed in | one job | the job, or 404 |
+| `DELETE /jobs/:id` | analyst, admin | cancels a queued **or running** job | 204; 409 if it already finished; 404 if unknown |
+| `GET /admin/settings` | admin | engine settings | `{threads, maxPaths}` |
+| `PUT /admin/settings` | admin | body `{threads, maxPaths}` (1–64 threads, 1,000 to 1,000,000,000 paths) | the new settings, or 400 |
+| `GET /admin/users` | admin | accounts | `[{username, name, role}]` (no password data) |
+
+Not signed in: 401. Wrong role: 403.
 
 `params` is `{type: "call"|"put", method: "mc"|"bs", S, K, T, r, v, n}`.
 S, K, T and v must be above 0, r any number, and for `mc`, n a whole number
-from 1,000 to 100,000,000.
+from 1,000 to the `maxPaths` setting (default 100,000,000).
 
-How a job runs:
+### How a job runs
 
-- Jobs run **one at a time**, oldest first. Each run already uses all 4
-  threads, so running several at once would only slow all of them down.
-- `mc` runs `./pricer 4 --json --S .. --K .. --T .. --r .. --v .. --paths n
-  --seed <job number> [--put]`. Each job uses its job number as the seed, so
-  repeating a contract gives an independent run. The seed is stored in the
-  job (`seed`) so any result can be reproduced from the command line.
-- `bs` runs `./pricer 4 --exact ...` (no simulation).
+- Jobs run **one at a time**, oldest first. Each run already uses all the
+  engine threads, so running several at once would only slow all of them.
+- `mc` runs `./pricer <threads> --json --S .. --K .. --T .. --r .. --v ..
+  --paths n --seed <job number> [--put]`; `bs` runs `./pricer <threads>
+  --exact ...` (no simulation). `<threads>` is the admin setting (default 4,
+  the Pavilion's logical CPUs); the job records it in `threads`.
+- Each job uses its job number as the seed, so repeating a contract gives an
+  independent run. The seed is stored in the job (`seed`), so any result can
+  be reproduced from the command line.
 - The arguments are passed as a list (`execFile`), never through a shell,
   so nothing typed into the website can run as a command.
 - The job's `result` is the engine's JSON line. If the engine fails, the job
   becomes `failed` with an `error` message; the server keeps running.
-- Jobs are kept in memory only (they are lost when the server stops); the
-  oldest finished jobs are dropped after 500.
+- Cancelling a running job stops the engine process at once; the job
+  becomes `failed` with error `Cancelled`.
+- `submittedBy` is the signed-in account's name (set by the server).
+
+### Saved data (`data/`, not in git)
+
+| File | Holds |
+|---|---|
+| `jobs.json` | job history; reloaded on start. Job numbers (and so seeds) carry on from the highest saved one. A job that was running when the server stopped is marked `failed` ("Server stopped while this job was running"); queued jobs run when the server starts again. The oldest finished jobs are dropped after 500. |
+| `settings.json` | `threads` and `maxPaths` from the admin page (`THREADS=...` overrides threads at start) |
+| `users.json` | accounts (hashed passwords) |
+| `demo-passwords.txt` | passwords of the demo accounts created on first start |
+
+Files are written to a temporary file and then renamed, so a crash cannot
+leave half a file. A file that cannot be read is renamed aside, not
+overwritten. `DATA_DIR=...` puts the folder elsewhere.
 
 ## The frontend
 
 `frontend/js/api.js` talks to the backend automatically when the page is
-served over http (by the backend), and falls back to an in-browser mock
-engine when the page is opened as a file. See `frontend/README.md`.
+served over http (by the backend): the platform then shows a sign-in form,
+and the account's role decides which pages appear. Opened as a file, it
+falls back to an in-browser mock engine with a role drop-down instead. See
+`frontend/README.md`.
 
 All fields the frontend expects are now provided (ISSUES #4, resolved
 13 Nov 2026), except `progress` for running jobs, which the engine does

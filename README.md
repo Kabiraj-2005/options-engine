@@ -13,8 +13,14 @@ g++ -std=c++17 -O2 -pthread src/pricer.cpp -o pricer
 node backend/server.js
 ```
 
-Then open `http://localhost:10241/app.html`. Needs `g++` and Node.js
-(no npm packages). Details in `INTERFACE.md`.
+Then open `http://localhost:10241/app.html` and sign in. On first start the
+server creates three demo accounts (`analyst`, `risk`, `admin`) and writes
+their passwords to `data/demo-passwords.txt`. Manage accounts with
+`node backend/users.js`. Job history, settings and accounts are saved in
+`data/` (not in git), so they survive a restart. Stop the server with
+Ctrl+C.
+
+Needs `g++` and Node.js (no npm packages). Details in `INTERFACE.md`.
 
 ## Build
 

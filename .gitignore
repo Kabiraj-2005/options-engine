@@ -3,3 +3,4 @@ pricer
 *.save
 .DS_Store
 results/
+data/
