@@ -95,14 +95,31 @@ window.OE = (function () {
   }
 
   /* ---------- real backend ---------- */
+  // Sign-in token from POST /login, kept for this browser tab only.
+  var auth = { token: null, onSignedOut: null };
+  try { auth.token = sessionStorage.getItem('oe-token'); } catch (e) { /* storage blocked */ }
+  function setToken(t) {
+    auth.token = t;
+    try { if (t) sessionStorage.setItem('oe-token', t); else sessionStorage.removeItem('oe-token'); } catch (e) {}
+  }
+
   function http(method, path, body) {
+    var headers = { 'Content-Type': 'application/json' };
+    if (auth.token) headers.Authorization = 'Bearer ' + auth.token;
     return fetch(config.baseUrl + path, {
       method: method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: headers,
       body: body ? JSON.stringify(body) : undefined
     }).then(function (r) {
-      if (!r.ok) throw new Error(method + ' ' + path + ' failed: ' + r.status);
-      return r.status === 204 ? null : r.json();
+      if (r.status === 204) return null;
+      return r.json().catch(function () { return {}; }).then(function (data) {
+        if (r.ok) return data;
+        // 401 = not signed in (or the session ran out): ask the page to show the sign-in form
+        if (r.status === 401 && path !== '/login') { setToken(null); if (auth.onSignedOut) auth.onSignedOut(); }
+        var err = new Error(data.error || (method + ' ' + path + ' failed: ' + r.status));
+        err.status = r.status;
+        throw err;
+      });
     });
   }
 
@@ -225,6 +242,24 @@ window.OE = (function () {
 
   function api() { return config.baseUrl ? realApi : mockApi; }
 
+  // Sign-in and admin calls exist only with the real backend.
+  var account = {
+    login: function (username, password) {
+      return http('POST', '/login', { username: username, password: password }).then(function (d) {
+        setToken(d.token);
+        return d.user;
+      });
+    },
+    logout: function () {
+      return http('POST', '/logout').catch(function () {}).then(function () { setToken(null); });
+    },
+    me: function () { return auth.token ? http('GET', '/me') : Promise.reject(new Error('not signed in')); },
+    getSettings: function () { return http('GET', '/admin/settings'); },
+    saveSettings: function (s) { return http('PUT', '/admin/settings', s); },
+    users: function () { return http('GET', '/admin/users'); },
+    onSignedOut: function (fn) { auth.onSignedOut = fn; }
+  };
+
   return {
     config: config,
     ENDPOINTS: ENDPOINTS,
@@ -237,6 +272,7 @@ window.OE = (function () {
     get:    function (id) { return api().get(id); },
     cancel: function (id) { return api().cancel(id); },
     health: function () { return api().health(); },
-    isMock: function () { return !config.baseUrl; }
+    isMock: function () { return !config.baseUrl; },
+    account: account
   };
 })();
